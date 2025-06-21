@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora de Cortocircuito Profesional v12</title>
+    <title>Calculadora de Cortocircuito Profesional v13 (Log Detallado)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -25,6 +25,9 @@
         table { width: 100%; text-align: left; border-collapse: collapse; font-size: 0.9rem; background-color: white; }
         th, td { padding: 0.75rem; border: 1px solid #d1d5db; text-align: center;}
         th { background-color: #e5e7eb; font-weight: 600; }
+        .calculation-log-entry { padding: 0.75rem; border-bottom: 1px solid #e5e7eb; font-family: 'Courier New', monospace; font-size: 0.85rem; line-height: 1.5; }
+        .calculation-log-entry:last-child { border-bottom: none; }
+        .calculation-log-entry strong { color: #4f46e5; }
         .feeder-node { border: 2px solid #4338ca; border-radius: 0.75rem; padding: 1.5rem; margin-top: 1.5rem; background-color: #fafbff; }
         .cable-node { border: 1px solid #d1d5db; border-radius: 0.75rem; padding: 1rem; margin-top: 1rem; background-color: white; }
         .node-actions { margin-top: 1rem; display: flex; gap: 0.5rem; justify-content: flex-end; }
@@ -81,6 +84,12 @@
              <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-6">
                 <div> <h4 class="text-lg font-semibold mb-2 text-indigo-700">Factor de Impulso χ (Kappa)</h4> <div class="overflow-x-auto"> <table id="kappaTable"></table> </div> </div>
                 <div> <h4 class="text-lg font-semibold mb-2 text-indigo-700">Valores Típicos para Transformadores</h4> <div class="overflow-x-auto"> <table id="trafoTable"></table> </div> </div>
+            </div>
+            <div class="mt-8">
+                <h4 class="text-lg font-semibold mb-2 text-indigo-700">Memoria de Cálculo (Paso a Paso)</h4>
+                <div id="calculationLogContainer" class="bg-white p-4 rounded-lg shadow-inner max-h-96 overflow-y-auto">
+                    <p class="text-gray-500 p-4 text-center">El detalle del cálculo aparecerá aquí.</p>
+                </div>
             </div>
         </div>
     </div>
@@ -187,6 +196,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function calculateAndDisplaySC() {
+        let calculationLog = [];
         exportData = [];
         const resultsContent = getById('resultsContentSC');
         resultsContent.innerHTML = '';
@@ -197,6 +207,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!Scc_red_mva || !U_red_kv || getById('transformerFeedersContainer').children.length === 0) {
             getById('resultsPlaceholderSC').style.display = 'block';
             resultsContent.style.display = 'none';
+            displayCalculationLog([]);
             return;
         }
         
@@ -207,9 +218,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const X_red_ohm = Z_red_ohm / 1.005; 
         const R_red_ohm = X_red_ohm * 0.1;
         addSCResult("Acometida de Red (MT)", U_red_kv * 1000, R_red_ohm, X_red_ohm);
+        calculationLog.push(`<strong>1. Acometida MT:</strong> Z_red = (1.1 * ${U_red_kv}² kV) / ${Scc_red_mva} MVA = ${Z_red_ohm.toFixed(5)} Ω`);
         
         document.querySelectorAll('.feeder-node').forEach((feederNode, index) => {
             const feederName = `Alimentador #${index + 1}`;
+            calculationLog.push(`<strong class="text-purple-700 mt-4 block border-t pt-4">--- INICIO CÁLCULO ${feederName.toUpperCase()} ---</strong>`);
+            
             const S_tr_kva = parseFloat(feederNode.querySelector('.power').value) || 0;
             const U_tr_v = parseFloat(feederNode.querySelector('.voltage').value) || 0;
             const Zcc_tr_percent = parseFloat(feederNode.querySelector('.impedance').value) || 0;
@@ -223,12 +237,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 const area_mt = feederNode.querySelector('.cable-section-area-mt').value;
                 const type_mt = feederNode.querySelector('.cable-type-mt').value;
                 const material_mt = feederNode.querySelector('.cable-material-mt').value;
-                const insulation_mt = "xlpe"; // MT is always XLPE
+                const insulation_mt = "xlpe";
                 const r_km = CONSTS.CABLE_RESISTANCE[material_mt]?.[insulation_mt]?.[area_mt] || 0;
                 const x_km = CONSTS.CABLE_REACTANCE[type_mt]?.[area_mt] || 0;
                 R_cable_mt = r_km * (length_mt_m / 1000);
                 X_cable_mt = x_km * (length_mt_m / 1000);
             }
+            calculationLog.push(`<strong>2. Cable MT (${feederName}):</strong> R=${R_cable_mt.toFixed(5)}, X=${X_cable_mt.toFixed(5)}`);
             
             const R_total_mt = R_red_ohm + R_cable_mt;
             const X_total_mt = X_red_ohm + X_cable_mt;
@@ -237,22 +252,26 @@ document.addEventListener('DOMContentLoaded', function() {
             const transform_ratio = (U_red_kv * 1000) / U_tr_v;
             const R_mt_ref_bt = R_total_mt / (transform_ratio ** 2);
             const X_mt_ref_bt = X_total_mt / (transform_ratio ** 2);
+            calculationLog.push(`<strong>3. Ref. a BT (${feederName}):</strong> R_ref = ${R_total_mt.toFixed(5)} / ${transform_ratio.toFixed(2)}² = ${R_mt_ref_bt.toFixed(5)}`);
             
             const R_tr_ohm = (Ur_tr_percent / 100) * (U_tr_v ** 2) / (S_tr_kva * 1000);
             const Ux_tr_percent = Math.sqrt(Math.max(0, Zcc_tr_percent**2 - Ur_tr_percent**2));
             const X_tr_ohm = (Ux_tr_percent / 100) * (U_tr_v ** 2) / (S_tr_kva * 1000);
-            
+            calculationLog.push(`<strong>4. Impedancia Trafo (${feederName}):</strong> R_tr=${R_tr_ohm.toFixed(5)}, X_tr=${X_tr_ohm.toFixed(5)}`);
+
             const R_base_bt = R_mt_ref_bt + R_tr_ohm;
             const X_base_bt = X_mt_ref_bt + X_tr_ohm;
             addSCResult(`${feederName} - Bornes BT Trafo`, U_tr_v, R_base_bt, X_base_bt);
+            calculationLog.push(`<strong>5. Total en Bornes BT (${feederName}):</strong> R_total=${R_base_bt.toFixed(5)}, X_total=${X_base_bt.toFixed(5)}`);
             
             feederNode.querySelector('.circuitTreeContainer').querySelectorAll(':scope > .cable-node').forEach((node) => {
-                recursiveCalculate(node, `${feederName} @ Bornes BT`, R_base_bt, X_base_bt, U_tr_v);
+                recursiveCalculate(node, `${feederName} @ Bornes BT`, R_base_bt, X_base_bt, calculationLog, U_tr_v);
             });
         });
+        displayCalculationLog(calculationLog);
     }
     
-    function recursiveCalculate(nodeElement, parentName, parentR, parentX, voltage) {
+    function recursiveCalculate(nodeElement, parentName, parentR, parentX, log, voltage) {
         const area = nodeElement.querySelector('.cable-section-area-sc').value;
         const length_m = parseFloat(nodeElement.querySelector('.cable-length-sc').value) || 0;
         const material = nodeElement.querySelector('.cable-material-sc').value;
@@ -278,10 +297,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const pointName = `${parentName} → ${nodeTitle}`;
 
         addSCResult(pointName, voltage, R_total_at_node, X_total_at_node, { I_adm_cc, Icc3, passes });
+        log.push(`<strong>Punto ${nodeTitle}:</strong> R_cable=${R_cable.toFixed(5)}, X_cable=${X_cable.toFixed(5)}<br>↳ R_total=${R_total_at_node.toFixed(5)}, X_total=${X_total_at_node.toFixed(5)}`);
         
         const childrenContainer = nodeElement.querySelector('.children-container');
         childrenContainer.querySelectorAll(':scope > .cable-node').forEach((childNode) => {
-            recursiveCalculate(childNode, nodeTitle, R_total_at_node, X_total_at_node, voltage);
+            recursiveCalculate(childNode, nodeTitle, R_total_at_node, X_total_at_node, log, voltage);
         });
     }
 
@@ -311,8 +331,42 @@ document.addEventListener('DOMContentLoaded', function() {
         resultDiv.innerHTML = `<h4 class="text-lg font-semibold text-indigo-600 mb-3">${pointName}</h4>
             <div class="result-item"><span>Icc Calculada:</span><span class="font-bold text-xl text-red-600">${(Icc3 / 1000).toFixed(2)} kA</span></div>
             <div class="result-item"><span>Corriente de Impulso (Is):</span><span class="font-bold text-xl text-purple-600">${(Is / 1000).toFixed(2)} kA</span></div>
-            ${verificationHTML}`;
+            ${verificationHTML}
+            <details class="mt-2 text-sm"><summary>Ver detalles de impedancia</summary><div class="log-box">Z_total: ${Z_total.toFixed(5)} Ω<br>R_total: ${R_total.toFixed(5)} Ω<br>X_total: ${X_total.toFixed(5)} Ω<br>R/X: ${ratio_RX.toFixed(3)}<br>Factor χ: ${kappa.toFixed(3)}</div></details>`;
         getById('resultsContentSC').appendChild(resultDiv);
+    }
+    
+    function displayCalculationLog(log) {
+        const container = getById('calculationLogContainer');
+        container.innerHTML = log.length ? log.map(e => `<div class="calculation-log-entry">${e}</div>`).join('') : '<p class="text-gray-500 p-4 text-center">El detalle del cálculo aparecerá aquí.</p>';
+    }
+
+    function getKappaFactor(ratio) {
+        if (isNaN(ratio)) return 1.0; const table = CONSTS.KAPPA_TABLE; if (ratio <= table[0].r) return table[0].k; if (ratio >= table[table.length - 1].r) return 1.0;
+        for (let i = 0; i < table.length - 1; i++) { if (ratio >= table[i].r && ratio < table[i+1].r) { const l = table[i], u = table[i+1]; return l.k + ((ratio - l.r) / (u.r - l.r)) * (u.k - l.k); } } return 1.0;
+    }
+
+    function populateAnnexTables() {
+        const createTable = (data, headers) => `<thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${data.map(row => `<tr>${Object.values(row).map(cell => `<td>${cell}</td>`).join('')}</tr>`).join('')}</tbody>`;
+        if(getById('kappaTable')) getById('kappaTable').innerHTML = createTable(CONSTS.KAPPA_TABLE, ['R/X', 'Factor χ']);
+        if(getById('trafoTable')) getById('trafoTable').innerHTML = createTable(CONSTS.TRAFO_VALUES, ['S [kVA]', 'Ucc [%]', 'Ur [%]']);
+    }
+    
+    function handleExportSC() {
+        if (exportData.length === 0) {
+            alert("No hay datos para exportar.");
+            return;
+        }
+        const headers = ["Punto de Falla", "Icc (kA)", "Is (kA)", "Iadm_cc (kA)", "Verifica Icc?", "Z_total (Ω)", "R_total (Ω)", "X_total (Ω)", "R/X", "Factor χ"];
+        const rows = [headers, ...exportData.map(d => [d.pointName, d.icc, d.is, d.i_adm_cc, d.verifica, d.z, d.r, d.x, d.rx, d.kappa])];
+        const processRow = row => row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(';');
+        const csvContent = "data:text/csv;charset=utf-8," + rows.map(processRow).join('\n');
+        const link = document.createElement("a");
+        link.setAttribute("href", encodeURI(csvContent));
+        link.setAttribute("download", 'resultados_cortocircuito.csv');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
     
     function init() {
@@ -344,17 +398,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         calculateAndDisplaySC();
     }
-    
-    function getKappaFactor(ratio) {
-        if (isNaN(ratio)) return 1.0; const table = CONSTS.KAPPA_TABLE; if (ratio <= table[0].r) return table[0].k; if (ratio >= table[table.length - 1].r) return 1.0;
-        for (let i = 0; i < table.length - 1; i++) { if (ratio >= table[i].r && ratio < table[i+1].r) { const l = table[i], u = table[i+1]; return l.k + ((ratio - l.r) / (u.r - l.r)) * (u.k - l.k); } } return 1.0;
-    }
-    function populateAnnexTables() {
-        const createTable = (data, headers) => `<thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${data.map(row => `<tr>${Object.values(row).map(cell => `<td>${cell}</td>`).join('')}</tr>`).join('')}</tbody>`;
-        if(getById('kappaTable')) getById('kappaTable').innerHTML = createTable(CONSTS.KAPPA_TABLE, ['R/X', 'Factor χ']);
-        if(getById('trafoTable')) getById('trafoTable').innerHTML = createTable(CONSTS.TRAFO_VALUES, ['S [kVA]', 'Ucc [%]', 'Ur [%]']);
-    }
-    function handleExportSC() { /* Lógica de exportación */ }
     
     init();
 });
