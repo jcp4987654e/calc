@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora Eléctrica Profesional v11 (Secciones Extendidas)</title>
+    <title>Calculadora de Cortocircuito Profesional v12</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -25,9 +25,6 @@
         table { width: 100%; text-align: left; border-collapse: collapse; font-size: 0.9rem; background-color: white; }
         th, td { padding: 0.75rem; border: 1px solid #d1d5db; text-align: center;}
         th { background-color: #e5e7eb; font-weight: 600; }
-        .calculation-log-entry { padding: 0.75rem; border-bottom: 1px solid #e5e7eb; font-family: 'Courier New', monospace; font-size: 0.85rem; line-height: 1.5; }
-        .calculation-log-entry:last-child { border-bottom: none; }
-        .calculation-log-entry strong { color: #4f46e5; }
         .feeder-node { border: 2px solid #4338ca; border-radius: 0.75rem; padding: 1.5rem; margin-top: 1.5rem; background-color: #fafbff; }
         .cable-node { border: 1px solid #d1d5db; border-radius: 0.75rem; padding: 1rem; margin-top: 1rem; background-color: white; }
         .node-actions { margin-top: 1rem; display: flex; gap: 0.5rem; justify-content: flex-end; }
@@ -39,7 +36,7 @@
     <div class="container mx-auto p-4 md:p-8 max-w-7xl">
         <header class="text-center mb-8">
             <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Calculadora de Cortocircuito</h1>
-            <p class="text-md text-gray-600 mt-2">Selección y Verificación de Cables en MT y BT</p>
+            <p class="text-md text-gray-600 mt-2">Análisis con Alimentadores Múltiples y Derivaciones</p>
         </header>
 
         <div class="mb-12">
@@ -85,12 +82,6 @@
                 <div> <h4 class="text-lg font-semibold mb-2 text-indigo-700">Factor de Impulso χ (Kappa)</h4> <div class="overflow-x-auto"> <table id="kappaTable"></table> </div> </div>
                 <div> <h4 class="text-lg font-semibold mb-2 text-indigo-700">Valores Típicos para Transformadores</h4> <div class="overflow-x-auto"> <table id="trafoTable"></table> </div> </div>
             </div>
-            <div class="mt-8">
-                <h4 class="text-lg font-semibold mb-2 text-indigo-700">Memoria de Cálculo (Paso a Paso)</h4>
-                <div id="calculationLogContainer" class="bg-white p-4 rounded-lg shadow-inner max-h-96 overflow-y-auto">
-                    <p class="text-gray-500 p-4 text-center">El detalle del cálculo aparecerá aquí.</p>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -113,23 +104,7 @@ document.addEventListener('DOMContentLoaded', function() {
             unipolar: {'1.5':0.08,'2.5':0.08,'4':0.08,'6':0.078,'10':0.136,'16':0.126,'25':0.117,'35':0.111,'50':0.106,'70':0.1,'95':0.095,'120':0.091,'150':0.086,'185':0.083,'240':0.081, '300': 0.083, '400': 0.081, '500': 0.080, '630': 0.079},
             tripolar: {'1.5':0.08,'2.5':0.08,'4':0.08,'6':0.078,'10':0.115,'16':0.107,'25':0.1,'35':0.095,'50':0.091,'70':0.086,'95':0.083,'120':0.081,'150':0.079,'185':0.079,'240':0.076, '300': 0.075, '400': 0.074, '500': 0.073, '630': 0.072}
         },
-        AMPACITY: { // IRAM 2178, Trifásico
-            pvc: {
-                cobre: {
-                    E: [{s:1.5,i:16},{s:2.5,i:22},{s:4,i:30},{s:6,i:37},{s:10,i:52},{s:16,i:70},{s:25,i:88},{s:35,i:110},{s:50,i:133},{s:70,i:171},{s:95,i:207},{s:120,i:240},{s:150,i:278},{s:185,i:317},{s:240,i:374},{s:300,i:432}],
-                    F: [{s:25,i:96},{s:35,i:119},{s:50,i:145},{s:70,i:188},{s:95,i:230},{s:120,i:268},{s:150,i:310},{s:185,i:356},{s:240,i:422},{s:300,i:488},{s:400,i:571},{s:500,i:652},{s:630,i:744}]
-                }
-            },
-            xlpe: { // Ampacidad PVC * 1.25 aprox.
-                 cobre: {
-                    E: [{s:1.5,i:21},{s:2.5,i:29},{s:4,i:38},{s:6,i:49},{s:10,i:68},{s:16,i:91},{s:25,i:116},{s:35,i:144},{s:50,i:175},{s:70,i:224},{s:95,i:271},{s:120,i:315},{s:150,i:363},{s:185,i:415},{s:240,i:490},{s:300,i:565}],
-                    F: [{s:25,i:123},{s:35,i:154},{s:50,i:188},{s:70,i:244},{s:95,i:298},{s:120,i:349},{s:150,i:404},{s:185,i:464},{s:240,i:552},{s:300,i:640},{s:400,i:749},{s:500,i:861},{s:630,i:990}]
-                }
-            }
-        },
         K_FACTOR_CC: { cobre: { pvc: 115, xlpe: 143 }, aluminio: { pvc: 76, xlpe: 94 }},
-        K1_TEMP: { pvc: [{t:40,f:1}], xlpe: [{t:40,f:1}] }, 
-        K2_AGRUP: [{n:1,f:1},{n:2,f:0.8},{n:3,f:0.7}],
         KAPPA_TABLE: [{r:0,k:2},{r:0.1,k:1.86},{r:0.2,k:1.71},{r:0.3,k:1.57},{r:0.4,k:1.45},{r:0.5,k:1.35},{r:0.6,k:1.26},{r:0.7,k:1.19},{r:0.8,k:1.13},{r:0.9,k:1.08},{r:1,k:1.04},{r:1.1,k:1.02},{r:1.2,k:1.01}],
         TRAFO_VALUES: [{ s: "25-160", ucc: 4, ur: "2.8-1.47" },{ s: "200-315", ucc: 4, ur: "1.4-1.23" },{ s: "400-630", ucc: 4, ur: "1.15-1.03" },{ s: "800-1250", ucc: 5, ur: "1.1-1.05" },{ s: "1600-2500", ucc: 6, ur: "1.0-1.05" }]
     };
@@ -171,11 +146,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             </div>
             <div>
-                <h4 class="text-xl font-semibold mb-4 text-gray-800">4. Estructura y Cargas en BT</h4>
-                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
-                     <div class="input-group"><label>Temp. Ambiente BT [°C]</label><input type="number" value="40" class="temp-bt data-input"></div>
-                     <div class="input-group"><label>Nº Circuitos Agrupados BT</label><input type="number" value="1" min="1" class="group-bt data-input"></div>
-                 </div>
+                <h4 class="text-xl font-semibold mb-4 text-gray-800">4. Estructura de Circuitos en BT</h4>
                 <div class="circuitTreeContainer"></div>
                 <div class="mt-4">
                     <button type="button" class="add-trunk-btn btn btn-sm bg-blue-600 hover:bg-blue-700 text-white w-full">Agregar Troncal BT</button>
@@ -193,16 +164,18 @@ document.addEventListener('DOMContentLoaded', function() {
         nodeDiv.id = id;
 
         const title = container.classList.contains('circuitTreeContainer') ? `Troncal BT #${container.children.length + 1}` : `Derivación #${container.children.length + 1}`;
+        let sectionOptions = CONSTS.CABLE_SECTIONS.filter(s => parseFloat(s) >= 10).map(s => `<option value="${s}" ${s === "95" ? "selected" : ""}>${s} mm²</option>`).join('');
+
         
         nodeDiv.innerHTML = `
             <div class="node-content">
                 <div class="flex justify-between items-center mb-4"><h4 class="font-semibold text-gray-800">${title}</h4><button type="button" class="remove-btn text-red-500 hover:text-red-700 font-bold text-2xl" data-target="${id}">&times;</button></div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4">
-                    <div class="input-group"><label>Corriente de Carga [A]</label><input type="number" value="100" class="load-current-sc data-input"></div>
+                    <div class="input-group"><label>Sección</label><select class="cable-section-area-sc data-input">${sectionOptions}</select></div>
                     <div class="input-group"><label>Longitud [m]</label><input type="number" value="20" class="cable-length-sc data-input"></div>
                     <div class="input-group"><label>Material</label><select class="cable-material-sc data-input"><option value="cobre" selected>Cobre</option><option value="aluminio">Aluminio</option></select></div>
                     <div class="input-group"><label>Aislación</label><select class="cable-insulation-sc data-input"><option value="xlpe" selected>XLPE</option><option value="pvc">PVC</option></select></div>
-                    <div class="input-group"><label>Tendido</label><select class="cable-layout-sc data-input"><option value="E" selected>Bandeja</option><option value="F">Trébol</option></select></div>
+                    <div class="input-group"><label>Tipo</label><select class="cable-type-sc data-input"><option value="tripolar" selected>Tripolar</option><option value="unipolar">3 Unipolares</option></select></div>
                     <div class="input-group"><label>Tiempo Despeje [s]</label><input type="number" value="0.1" step="0.01" class="protection-time-sc data-input"></div>
                 </div>
             </div>
@@ -214,7 +187,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function calculateAndDisplaySC() {
-        let calculationLog = [];
         exportData = [];
         const resultsContent = getById('resultsContentSC');
         resultsContent.innerHTML = '';
@@ -222,10 +194,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const Scc_red_mva = parseFloat(getById('sccRed').value) || 0;
         const U_red_kv = parseFloat(getById('tensionRed').value) || 0;
         
-        if (!Scc_red_mva || !U_red_kv) {
+        if (!Scc_red_mva || !U_red_kv || getById('transformerFeedersContainer').children.length === 0) {
             getById('resultsPlaceholderSC').style.display = 'block';
             resultsContent.style.display = 'none';
-            displayCalculationLog([]);
             return;
         }
         
@@ -252,7 +223,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const area_mt = feederNode.querySelector('.cable-section-area-mt').value;
                 const type_mt = feederNode.querySelector('.cable-type-mt').value;
                 const material_mt = feederNode.querySelector('.cable-material-mt').value;
-                const insulation_mt = "xlpe";
+                const insulation_mt = "xlpe"; // MT is always XLPE
                 const r_km = CONSTS.CABLE_RESISTANCE[material_mt]?.[insulation_mt]?.[area_mt] || 0;
                 const x_km = CONSTS.CABLE_REACTANCE[type_mt]?.[area_mt] || 0;
                 R_cable_mt = r_km * (length_mt_m / 1000);
@@ -275,76 +246,42 @@ document.addEventListener('DOMContentLoaded', function() {
             const X_base_bt = X_mt_ref_bt + X_tr_ohm;
             addSCResult(`${feederName} - Bornes BT Trafo`, U_tr_v, R_base_bt, X_base_bt);
             
-            const k1 = 1.0;
-            const k2 = 1.0;
-            
             feederNode.querySelector('.circuitTreeContainer').querySelectorAll(':scope > .cable-node').forEach((node) => {
-                recursiveCalculate(node, `${feederName} @ Bornes BT`, R_base_bt, X_base_bt, calculationLog, U_tr_v, k1, k2);
+                recursiveCalculate(node, `${feederName} @ Bornes BT`, R_base_bt, X_base_bt, U_tr_v);
             });
         });
-
-        displayCalculationLog(calculationLog);
     }
     
-    function recursiveCalculate(nodeElement, parentName, parentR, parentX, log, voltage, k1, k2) {
-        const I_carga = parseFloat(nodeElement.querySelector('.load-current-sc').value) || 0;
+    function recursiveCalculate(nodeElement, parentName, parentR, parentX, voltage) {
+        const area = nodeElement.querySelector('.cable-section-area-sc').value;
         const length_m = parseFloat(nodeElement.querySelector('.cable-length-sc').value) || 0;
         const material = nodeElement.querySelector('.cable-material-sc').value;
         const insulation = nodeElement.querySelector('.cable-insulation-sc').value;
-        const layout = nodeElement.querySelector('.cable-layout-sc').value;
+        const type = nodeElement.querySelector('.cable-type-sc').value;
         const t = parseFloat(nodeElement.querySelector('.protection-time-sc').value) || 0.1;
 
-        let finalSection = null;
-        let finalResult = {};
+        const r_km = CONSTS.CABLE_RESISTANCE[material]?.[insulation]?.[area] || 0;
+        const x_km = CONSTS.CABLE_REACTANCE[type]?.[area] || 0;
+        const R_cable = r_km * (length_m / 1000);
+        const X_cable = x_km * (length_m / 1000);
 
-        const availableSections = (CONSTS.AMPACITY[insulation]?.[material]?.[layout] || []).map(d => d.s);
-
-        for(const S of CONSTS.CABLE_SECTIONS.filter(s => availableSections.includes(parseFloat(s)))) {
-            const section = parseFloat(S);
-            const ampacityData = CONSTS.AMPACITY[insulation]?.[material]?.[layout].find(d => d.s === section);
-            if (!ampacityData) continue;
-            
-            const I_adm = ampacityData.i * k1 * k2;
-            if (I_adm < I_carga) continue;
-
-            const r_km = CONSTS.CABLE_RESISTANCE[material]?.[insulation]?.[S] || 0;
-            const x_km = CONSTS.CABLE_REACTANCE.tripolar?.[S] || 0;
-            const R_cable = r_km * (length_m / 1000);
-            const X_cable = x_km * (length_m / 1000);
-
-            const R_total = parentR + R_cable;
-            const X_total = parentX + X_cable;
-            const Z_total = Math.sqrt(R_total**2 + X_total**2);
-            const Icc3 = Z_total > 0 ? (voltage / (Math.sqrt(3) * Z_total)) : 0;
-            
-            const k_icc = CONSTS.K_FACTOR_CC[material]?.[insulation] || 0;
-            const I_adm_cc = (k_icc * section) / Math.sqrt(t);
-            
-            if (I_adm_cc >= Icc3) {
-                finalSection = S;
-                finalResult = {
-                    R_total_at_node: R_total, X_total_at_node: X_total, selectedSection: finalSection,
-                    I_adm, I_carga, I_adm_cc, Icc3, passes: true
-                };
-                break;
-            }
-        }
+        const R_total_at_node = parentR + R_cable;
+        const X_total_at_node = parentX + X_cable;
+        const Z_total = Math.sqrt(R_total_at_node**2 + X_total_at_node**2);
+        const Icc3 = Z_total > 0 ? (voltage / (Math.sqrt(3) * Z_total)) : 0;
         
+        const k_icc = CONSTS.K_FACTOR_CC[material]?.[insulation] || 0;
+        const I_adm_cc = (k_icc * parseFloat(area)) / Math.sqrt(t);
+        const passes = I_adm_cc >= Icc3;
+
         const nodeTitle = nodeElement.querySelector('h4').textContent;
         const pointName = `${parentName} → ${nodeTitle}`;
 
-        if (finalSection) {
-             addSCResult(pointName, voltage, finalResult.R_total_at_node, finalResult.X_total_at_node, finalResult);
-        } else {
-             addSCResult(pointName, voltage, parentR, parentX, { error: 'No se encontró sección que verifique Icc y Ampacidad.' });
-        }
-
-
+        addSCResult(pointName, voltage, R_total_at_node, X_total_at_node, { I_adm_cc, Icc3, passes });
+        
         const childrenContainer = nodeElement.querySelector('.children-container');
         childrenContainer.querySelectorAll(':scope > .cable-node').forEach((childNode) => {
-            if (finalSection) {
-                recursiveCalculate(childNode, nodeTitle, finalResult.R_total_at_node, finalResult.X_total_at_node, log, voltage, k1, k2);
-            }
+            recursiveCalculate(childNode, nodeTitle, R_total_at_node, X_total_at_node, voltage);
         });
     }
 
@@ -357,22 +294,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
         let verificationHTML = '';
         if (verification) {
-            if (verification.error) {
-                verificationHTML = `<div class="mt-4 p-3 rounded-lg text-center font-bold text-lg bg-red-100 text-red-800">${verification.error}</div>`;
-            } else {
-                 verificationHTML = `
-                    <div class="result-item mt-4 pt-4 border-t-2 border-dashed border-gray-300">
-                        <span class="font-bold text-gray-700">Sección Seleccionada:</span>
-                        <span class="font-extrabold text-2xl text-blue-700">${verification.selectedSection} mm²</span>
-                    </div>
-                    <div class="mt-2 p-2 rounded-lg text-center font-semibold text-sm ${verification.I_adm >= verification.I_carga ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
-                        Ampacidad: Iadm=${verification.I_adm.toFixed(1)}A ≥ Icarga=${verification.I_carga.toFixed(1)}A
-                    </div>
-                     <div class="mt-2 p-2 rounded-lg text-center font-semibold text-sm ${verification.I_adm_cc >= verification.Icc3 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
-                        Cortocircuito: Iadm_cc=${(verification.I_adm_cc / 1000).toFixed(2)}kA ≥ Icc=${(Icc3 / 1000).toFixed(2)}kA
-                    </div>
-                `;
-            }
+            const { I_adm_cc, passes } = verification;
+            const resultClass = passes ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+            verificationHTML = `
+                <div class="mt-4 p-3 rounded-lg text-center font-bold text-lg ${resultClass}">
+                    Verificación Icc: ${passes ? 'VERIFICA' : 'NO VERIFICA'}
+                </div>
+                <div class="text-xs text-center mt-1 text-gray-600">
+                    Iadm_cc: ${(I_adm_cc / 1000).toFixed(2)} kA vs. Icc: ${(Icc3 / 1000).toFixed(2)} kA
+                </div>
+            `;
         }
 
         const resultDiv = document.createElement('div');
@@ -380,8 +311,7 @@ document.addEventListener('DOMContentLoaded', function() {
         resultDiv.innerHTML = `<h4 class="text-lg font-semibold text-indigo-600 mb-3">${pointName}</h4>
             <div class="result-item"><span>Icc Calculada:</span><span class="font-bold text-xl text-red-600">${(Icc3 / 1000).toFixed(2)} kA</span></div>
             <div class="result-item"><span>Corriente de Impulso (Is):</span><span class="font-bold text-xl text-purple-600">${(Is / 1000).toFixed(2)} kA</span></div>
-            ${verificationHTML}
-            <details class="mt-2 text-sm"><summary>Ver detalles de impedancia</summary><div class="log-box">Z_total: ${Z_total.toFixed(5)} Ω<br>R_total: ${R_total.toFixed(5)} Ω<br>X_total: ${X_total.toFixed(5)} Ω<br>R/X: ${ratio_RX.toFixed(3)}<br>Factor χ: ${kappa.toFixed(3)}</div></details>`;
+            ${verificationHTML}`;
         getById('resultsContentSC').appendChild(resultDiv);
     }
     
@@ -392,7 +322,6 @@ document.addEventListener('DOMContentLoaded', function() {
             getById('transformerFeedersContainer').innerHTML = '';
             calculateAndDisplaySC();
         });
-        getById('exportSCBtn').addEventListener('click', handleExportSC);
         
         getById('shortCircuitForm').addEventListener('input', e => {
             if (e.target.classList.contains('data-input')) calculateAndDisplaySC();
@@ -416,11 +345,6 @@ document.addEventListener('DOMContentLoaded', function() {
         calculateAndDisplaySC();
     }
     
-    // --- FUNCIONES AUXILIARES (pegadas aquí para brevedad) ---
-    function displayCalculationLog(log) {
-        const container = getById('calculationLogContainer');
-        container.innerHTML = log.length ? log.map(e => `<div class="calculation-log-entry">${e}</div>`).join('') : '<p class="text-gray-500 p-4 text-center">El detalle del cálculo aparecerá aquí.</p>';
-    }
     function getKappaFactor(ratio) {
         if (isNaN(ratio)) return 1.0; const table = CONSTS.KAPPA_TABLE; if (ratio <= table[0].r) return table[0].k; if (ratio >= table[table.length - 1].r) return 1.0;
         for (let i = 0; i < table.length - 1; i++) { if (ratio >= table[i].r && ratio < table[i+1].r) { const l = table[i], u = table[i+1]; return l.k + ((ratio - l.r) / (u.r - l.r)) * (u.k - l.k); } } return 1.0;
