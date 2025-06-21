@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora de Cortocircuito Profesional v3</title>
+    <title>Calculadora de Cortocircuito Profesional v4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -25,6 +25,9 @@
         table { width: 100%; text-align: left; border-collapse: collapse; font-size: 0.9rem; background-color: white; }
         th, td { padding: 0.75rem; border: 1px solid #d1d5db; text-align: center;}
         th { background-color: #e5e7eb; font-weight: 600; }
+        .calculation-log-entry { padding: 0.75rem; border-bottom: 1px solid #e5e7eb; font-family: 'Courier New', monospace; font-size: 0.85rem; line-height: 1.5; }
+        .calculation-log-entry:last-child { border-bottom: none; }
+        .calculation-log-entry strong { color: #4f46e5; }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
@@ -35,7 +38,6 @@
             <p class="text-md text-gray-600 mt-2">Análisis de Impedancia de Falla según Metodología AEA</p>
         </header>
 
-        <!-- Calculadora de Cortocircuito -->
         <div class="mb-12">
             <h2 class="text-2xl font-bold text-center mb-6 text-gray-800 border-b pb-3">Análisis de Impedancia de Falla</h2>
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -104,6 +106,12 @@
                 <div> <h4 class="text-lg font-semibold mb-2 text-indigo-700">Factor de Impulso χ (Kappa)</h4> <div class="overflow-x-auto"> <table id="kappaTable"></table> </div> </div>
                 <div> <h4 class="text-lg font-semibold mb-2 text-indigo-700">Valores Típicos para Transformadores</h4> <div class="overflow-x-auto"> <table id="trafoTable"></table> </div> </div>
             </div>
+            <div class="mt-8">
+                <h4 class="text-lg font-semibold mb-2 text-indigo-700">Memoria de Cálculo (Paso a Paso)</h4>
+                <div id="calculationLogContainer" class="bg-white p-4 rounded-lg shadow-inner max-h-96 overflow-y-auto">
+                    <p class="text-gray-500 p-4 text-center">El detalle del cálculo aparecerá aquí al introducir los datos.</p>
+                </div>
+            </div>
         </div>
 
         <footer class="text-center mt-12 pt-6 border-t border-gray-200 text-sm text-gray-500">
@@ -164,13 +172,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (isNaN(ratio)) return 1.0;
         if (ratio <= CONSTS.KAPPA_TABLE[0].r) return CONSTS.KAPPA_TABLE[0].k;
         if (ratio >= CONSTS.KAPPA_TABLE[CONSTS.KAPPA_TABLE.length - 1].r) return 1.0;
-        
         for (let i = 0; i < CONSTS.KAPPA_TABLE.length - 1; i++) {
-            const lower = CONSTS.KAPPA_TABLE[i];
-            const upper = CONSTS.KAPPA_TABLE[i + 1];
-            if (ratio >= lower.r && ratio < upper.r) {
-                return lower.k + ((ratio - lower.r) / (upper.r - lower.r)) * (upper.k - lower.k);
-            }
+            const l = CONSTS.KAPPA_TABLE[i], u = CONSTS.KAPPA_TABLE[i + 1];
+            if (ratio >= l.r && ratio < u.r) return l.k + ((ratio - l.r) / (u.r - l.r)) * (u.k - l.k);
         }
         return 1.0;
     }
@@ -182,32 +186,24 @@ document.addEventListener('DOMContentLoaded', function() {
         const sectionDiv = document.createElement('div');
         sectionDiv.className = 'border border-gray-200 p-4 rounded-lg mb-4 cable-section';
         sectionDiv.id = id;
-
-        let sectionOptions = CONSTS.CABLE_SECTIONS
-            .filter(s => parseFloat(s) >= 10)
-            .map(s => `<option value="${s}" ${s === "95" ? "selected" : ""}>${s} mm²</option>`).join('');
-
-        sectionDiv.innerHTML = `
-            <div class="flex justify-between items-center mb-2">
-                <h4 class="font-semibold text-gray-700">Tramo de BT #${count}</h4>
-                <button type="button" class="text-red-500 hover:text-red-700 remove-btn font-bold text-2xl leading-none" data-target="${id}">&times;</button>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
-                <div class="input-group"><label>Material</label><select class="cable-material-sc data-input"><option value="cobre" selected>Cobre</option><option value="aluminio">Aluminio</option></select></div>
-                <div class="input-group"><label>Aislación</label><select class="cable-insulation-sc data-input"><option value="pvc" selected>PVC (70°C)</option><option value="xlpe">XLPE (90°C)</option></select></div>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-x-4">
-                <div class="input-group"><label>Longitud [m]</label><input type="number" value="20" class="cable-length-sc data-input" min="0"></div>
-                <div class="input-group"><label>Sección</label><select class="cable-section-area-sc data-input">${sectionOptions}</select></div>
-                <div class="input-group"><label>Tipo</label><select class="cable-type-sc data-input"><option value="tripolar" selected>Tripolar</option><option value="unipolar">3 Unipolares</option></select></div>
-            </div>`;
+        let sectionOptions = CONSTS.CABLE_SECTIONS.filter(s => parseFloat(s) >= 10).map(s => `<option value="${s}" ${s === "95" ? "selected" : ""}>${s} mm²</option>`).join('');
+        sectionDiv.innerHTML = `<div class="flex justify-between items-center mb-2"><h4 class="font-semibold text-gray-700">Tramo de BT #${count}</h4><button type="button" class="text-red-500 hover:text-red-700 remove-btn font-bold text-2xl leading-none" data-target="${id}">&times;</button></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4"><div class="input-group"><label>Material</label><select class="cable-material-sc data-input"><option value="cobre" selected>Cobre</option><option value="aluminio">Aluminio</option></select></div><div class="input-group"><label>Aislación</label><select class="cable-insulation-sc data-input"><option value="pvc" selected>PVC (70°C)</option><option value="xlpe">XLPE (90°C)</option></select></div></div><div class="grid grid-cols-1 sm:grid-cols-3 gap-x-4"><div class="input-group"><label>Longitud [m]</label><input type="number" value="20" class="cable-length-sc data-input" min="0"></div><div class="input-group"><label>Sección</label><select class="cable-section-area-sc data-input">${sectionOptions}</select></div><div class="input-group"><label>Tipo</label><select class="cable-type-sc data-input"><option value="tripolar" selected>Tripolar</option><option value="unipolar">3 Unipolares</option></select></div></div>`;
         container.appendChild(sectionDiv);
         calculateAndDisplaySC();
     }
 
+    function displayCalculationLog(log) {
+        const container = getById('calculationLogContainer');
+        if (!log || log.length === 0) {
+            container.innerHTML = '<p class="text-gray-500 p-4 text-center">El detalle del cálculo aparecerá aquí.</p>';
+            return;
+        }
+        container.innerHTML = log.map(entry => `<div class="calculation-log-entry">${entry}</div>`).join('');
+    }
+
     function calculateAndDisplaySC() {
+        let calculationLog = [];
         const resultsContent = getById('resultsContentSC');
-        const resultsPlaceholder = getById('resultsPlaceholderSC');
         resultsContent.innerHTML = '';
 
         const Scc_red_mva = parseFloat(getById('sccRed').value) || 0;
@@ -217,18 +213,20 @@ document.addEventListener('DOMContentLoaded', function() {
         const Zcc_tr_percent = parseFloat(getById('impedance').value) || 0;
         const Ur_tr_percent = parseFloat(getById('Ur_percent').value) || 0;
 
-        if (!Scc_red_mva || !U_red_kv || !S_tr_kva || !U_tr_v || !Zcc_tr_percent) {
-            resultsPlaceholder.style.display = 'block';
+        if (!Scc_red_mva || !U_red_kv || !S_tr_kva || !U_tr_v) {
+            getById('resultsPlaceholderSC').style.display = 'block';
             resultsContent.style.display = 'none';
+            displayCalculationLog([]);
             return;
         }
-        resultsPlaceholder.style.display = 'none';
+        getById('resultsPlaceholderSC').style.display = 'none';
         resultsContent.style.display = 'block';
 
         const Z_red_ohm = (1.1 * U_red_kv ** 2) / Scc_red_mva;
         const X_red_ohm = Z_red_ohm / 1.005; 
         const R_red_ohm = X_red_ohm * 0.1;
         addSCResult("Acometida de Red (MT)", U_red_kv * 1000, R_red_ohm, X_red_ohm);
+        calculationLog.push(`<strong>1. Impedancia de Red (MT):</strong><br>Z_red = (1.1 * ${U_red_kv}² kV) / ${Scc_red_mva} MVA = ${Z_red_ohm.toFixed(5)} Ω<br>R_red=${R_red_ohm.toFixed(5)} Ω, X_red=${X_red_ohm.toFixed(5)} Ω`);
 
         const length_mt_m = parseFloat(document.querySelector('.cable-length-mt').value) || 0;
         const area_mt = document.querySelector('.cable-section-area-mt').value;
@@ -243,42 +241,52 @@ document.addEventListener('DOMContentLoaded', function() {
             R_cable_mt = r_km * (length_mt_m / 1000);
             X_cable_mt = x_km * (length_mt_m / 1000);
         }
+        calculationLog.push(`<strong>2. Impedancia Cable MT (${length_mt_m}m de ${area_mt}mm²):</strong><br>R_cable_mt=${R_cable_mt.toFixed(5)} Ω, X_cable_mt=${X_cable_mt.toFixed(5)} Ω`);
         
         let R_total_mt = R_red_ohm + R_cable_mt;
         let X_total_mt = X_red_ohm + X_cable_mt;
         addSCResult("Bornes de MT del Trafo", U_red_kv * 1000, R_total_mt, X_total_mt);
+        calculationLog.push(`<strong>3. Total en Bornes MT del Trafo:</strong><br>R_total_mt = ${R_red_ohm.toFixed(5)} + ${R_cable_mt.toFixed(5)} = ${R_total_mt.toFixed(5)} Ω<br>X_total_mt = ${X_red_ohm.toFixed(5)} + ${X_cable_mt.toFixed(5)} = ${X_total_mt.toFixed(5)} Ω`);
 
         const transform_ratio = (U_red_kv * 1000) / U_tr_v;
         const R_mt_ref_bt = R_total_mt / (transform_ratio ** 2);
         const X_mt_ref_bt = X_total_mt / (transform_ratio ** 2);
+        calculationLog.push(`<strong>4. Referencia a Baja Tensión (BT):</strong><br>Relación a = (${U_red_kv*1000}V / ${U_tr_v}V) = ${transform_ratio.toFixed(2)}<br>R_ref_bt = ${R_total_mt.toFixed(5)} / ${transform_ratio.toFixed(2)}² = ${R_mt_ref_bt.toFixed(5)} Ω<br>X_ref_bt = ${X_total_mt.toFixed(5)} / ${transform_ratio.toFixed(2)}² = ${X_mt_ref_bt.toFixed(5)} Ω`);
         
         const U_tr_v_base = U_tr_v ** 2;
         const S_tr_va_base = S_tr_kva * 1000;
         const R_tr_ohm = (Ur_tr_percent / 100) * (U_tr_v_base / S_tr_va_base);
         const Ux_tr_percent = Math.sqrt(Math.max(0, Zcc_tr_percent**2 - Ur_tr_percent**2));
         const X_tr_ohm = (Ux_tr_percent / 100) * (U_tr_v_base / S_tr_va_base);
+        calculationLog.push(`<strong>5. Impedancia del Trafo (${S_tr_kva} kVA):</strong><br>R_tr=${R_tr_ohm.toFixed(5)} Ω, X_tr=${X_tr_ohm.toFixed(5)} Ω`);
 
         let R_total_bt = R_mt_ref_bt + R_tr_ohm;
         let X_total_bt = X_mt_ref_bt + X_tr_ohm;
         addSCResult("Bornes de BT del Trafo", U_tr_v, R_total_bt, X_total_bt);
+        calculationLog.push(`<strong>6. Total en Bornes BT del Trafo:</strong><br>R_total_bt = ${R_mt_ref_bt.toFixed(5)} + ${R_tr_ohm.toFixed(5)} = ${R_total_bt.toFixed(5)} Ω<br>X_total_bt = ${X_mt_ref_bt.toFixed(5)} + ${X_tr_ohm.toFixed(5)} = ${X_total_bt.toFixed(5)} Ω`);
         
         getById('cableSectionsContainerSC').querySelectorAll('.cable-section').forEach((section, index) => {
             const length_m = parseFloat(section.querySelector('.cable-length-sc').value) || 0;
             const area = section.querySelector('.cable-section-area-sc').value;
-            const type = section.querySelector('.cable-type-sc').value;
-            const material = section.querySelector('.cable-material-sc').value;
-            const insulation = section.querySelector('.cable-insulation-sc').value;
-
-            if (length_m > 0 && area && CONSTS.CABLE_RESISTANCE[material]?.[insulation]?.[area]) {
-                const r_km = CONSTS.CABLE_RESISTANCE[material][insulation][area];
+            if (length_m > 0 && area) {
+                const type = section.querySelector('.cable-type-sc').value;
+                const material = section.querySelector('.cable-material-sc').value;
+                const insulation = section.querySelector('.cable-insulation-sc').value;
+                const r_km = CONSTS.CABLE_RESISTANCE[material][insulation][area] || 0;
                 const x_km = CONSTS.CABLE_REACTANCE[type][area] || 0;
+                const R_cable_bt = r_km * (length_m / 1000);
+                const X_cable_bt = x_km * (length_m / 1000);
+
+                calculationLog.push(`<strong>${6 + index + 1}. Tramo BT #${index + 1} (${length_m}m de ${area}mm²):</strong><br>R_cable=${R_cable_bt.toFixed(5)} Ω, X_cable=${X_cable_bt.toFixed(5)} Ω<br>R_total_bt = ${R_total_bt.toFixed(5)} + ${R_cable_bt.toFixed(5)} = ${(R_total_bt + R_cable_bt).toFixed(5)} Ω<br>X_total_bt = ${X_total_bt.toFixed(5)} + ${X_cable_bt.toFixed(5)} = ${(X_total_bt + X_cable_bt).toFixed(5)} Ω`);
                 
-                R_total_bt += r_km * (length_m / 1000);
-                X_total_bt += x_km * (length_m / 1000);
+                R_total_bt += R_cable_bt;
+                X_total_bt += X_cable_bt;
                 
                 addSCResult(`Final del Tramo de BT #${index + 1}`, U_tr_v, R_total_bt, X_total_bt);
             }
         });
+        
+        displayCalculationLog(calculationLog);
     }
 
     function addSCResult(pointName, voltage_v, R_total, X_total) {
@@ -299,11 +307,7 @@ document.addEventListener('DOMContentLoaded', function() {
         resultDiv.dataset.rx = ratio_RX.toFixed(3);
         resultDiv.dataset.kappa = kappa.toFixed(3);
 
-        resultDiv.innerHTML = `
-            <h4 class="text-lg font-semibold text-indigo-600 mb-3">${pointName}</h4>
-            <div class="result-item"><span>Icc Trifásica (Icc):</span><span class="font-bold text-xl text-red-600">${(Icc3 / 1000).toFixed(2)} kA</span></div>
-            <div class="result-item"><span>Corriente de Impulso (Is):</span><span class="font-bold text-xl text-purple-600">${(Is / 1000).toFixed(2)} kA</span></div>
-            <details class="mt-2 text-sm"><summary>Ver detalles de impedancia</summary><div class="log-box">Z_total: ${Z_total.toFixed(5)} Ω<br>R_total: ${R_total.toFixed(5)} Ω<br>X_total: ${X_total.toFixed(5)} Ω<br>R/X: ${ratio_RX.toFixed(3)}<br>Factor χ: ${kappa.toFixed(3)}</div></details>`;
+        resultDiv.innerHTML = `<h4 class="text-lg font-semibold text-indigo-600 mb-3">${pointName}</h4><div class="result-item"><span>Icc Trifásica (Icc):</span><span class="font-bold text-xl text-red-600">${(Icc3 / 1000).toFixed(2)} kA</span></div><div class="result-item"><span>Corriente de Impulso (Is):</span><span class="font-bold text-xl text-purple-600">${(Is / 1000).toFixed(2)} kA</span></div><details class="mt-2 text-sm"><summary>Ver detalles de impedancia</summary><div class="log-box">Z_total: ${Z_total.toFixed(5)} Ω<br>R_total: ${R_total.toFixed(5)} Ω<br>X_total: ${X_total.toFixed(5)} Ω<br>R/X: ${ratio_RX.toFixed(3)}<br>Factor χ: ${kappa.toFixed(3)}</div></details>`;
         getById('resultsContentSC').appendChild(resultDiv);
     }
 
@@ -314,18 +318,6 @@ document.addEventListener('DOMContentLoaded', function() {
         calculateAndDisplaySC();
     }
 
-    function exportToCsv(filename, rows) {
-        const processRow = row => row.map(val => `"${(val==null ? '' : val.toString()).replace(/"/g, '""')}"`).join(';');
-        let csvContent = "data:text/csv;charset=utf-8," + rows.map(processRow).join('\n');
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", filename);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
-
     function handleExportSC() {
         const headers = ["Punto de Falla", "Icc (kA)", "Is (kA)", "Z_total (Ω)", "R_total (Ω)", "X_total (Ω)", "R/X", "Factor χ"];
         const rows = [headers];
@@ -334,14 +326,22 @@ document.addEventListener('DOMContentLoaded', function() {
             rows.push([data.point, data.icc, data.is, data.z, data.r, data.x, data.rx, data.kappa]);
         });
         if (rows.length > 1) {
-            exportToCsv('resultados_cortocircuito.csv', rows);
+            const processRow = row => row.map(val => `"${(val==null ? '' : val.toString()).replace(/"/g, '""')}"`).join(';');
+            let csvContent = "data:text/csv;charset=utf-8," + rows.map(processRow).join('\n');
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", 'resultados_cortocircuito.csv');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         } else {
             const exportBtn = getById('exportSCBtn');
-            const originalText = exportBtn.innerHTML;
-            exportBtn.innerHTML = 'No hay datos';
+            const originalText = exportBtn.textContent;
+            exportBtn.textContent = 'No hay datos';
             exportBtn.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
             setTimeout(() => {
-                exportBtn.innerHTML = originalText;
+                exportBtn.textContent = originalText;
                 exportBtn.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
             }, 2000);
         }
@@ -350,21 +350,17 @@ document.addEventListener('DOMContentLoaded', function() {
     function init() {
         populateMTSections();
         populateAnnexTables();
-        
         getById('addCableSectionBtn').addEventListener('click', addBTCableSection);
         getById('resetButtonSC').addEventListener('click', resetAllSC);
         getById('exportSCBtn').addEventListener('click', handleExportSC);
         
-        getById('shortCircuitForm').addEventListener('input', event => {
-            if (event.target.classList.contains('data-input')) {
-                calculateAndDisplaySC();
-            }
+        getById('shortCircuitForm').addEventListener('input', e => {
+            if (e.target.classList.contains('data-input')) calculateAndDisplaySC();
         });
         
-        document.body.addEventListener('click', event => {
-            if (event.target.classList.contains('remove-btn')) {
-                const targetId = event.target.dataset.target;
-                getById(targetId)?.remove();
+        document.body.addEventListener('click', e => {
+            if (e.target.classList.contains('remove-btn')) {
+                getById(e.target.dataset.target)?.remove();
                 calculateAndDisplaySC();
             }
         });
@@ -373,7 +369,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     init();
-
 });
 </script>
 </body>
