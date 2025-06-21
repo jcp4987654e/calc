@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora de Cortocircuito Profesional v13 (Log Detallado)</title>
+    <title>Calculadora de Cortocircuito Profesional v14 (Nombres Editables)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -32,6 +32,9 @@
         .cable-node { border: 1px solid #d1d5db; border-radius: 0.75rem; padding: 1rem; margin-top: 1rem; background-color: white; }
         .node-actions { margin-top: 1rem; display: flex; gap: 0.5rem; justify-content: flex-end; }
         .children-container { margin-top: 1rem; margin-left: 1rem; padding-left: 1rem; border-left: 2px solid #6366f1; }
+        .node-name-input { background-color: transparent; border: none; font-weight: bold; width: 100%; padding: 2px; border-radius: 3px; }
+        .node-name-input:hover { background-color: #f0f4ff; box-shadow: 0 0 0 1px #a5b4fc; }
+        .node-name-input:focus { outline: none; box-shadow: 0 1px #4f46e5; }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
@@ -118,7 +121,6 @@ document.addEventListener('DOMContentLoaded', function() {
         TRAFO_VALUES: [{ s: "25-160", ucc: 4, ur: "2.8-1.47" },{ s: "200-315", ucc: 4, ur: "1.4-1.23" },{ s: "400-630", ucc: 4, ur: "1.15-1.03" },{ s: "800-1250", ucc: 5, ur: "1.1-1.05" },{ s: "1600-2500", ucc: 6, ur: "1.0-1.05" }]
     };
 
-    let exportData = [];
     const getById = id => document.getElementById(id);
 
     function addFeederNode() {
@@ -133,7 +135,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         feederDiv.innerHTML = `
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-2xl font-bold text-purple-700">Alimentador a Trafo #${count}</h3>
+                <input type="text" value="Alimentador a Trafo #${count}" class="node-name-input text-2xl text-purple-700 data-input">
                 <button type="button" class="remove-btn text-red-500 hover:text-red-700 font-bold text-2xl" data-target="${id}">&times;</button>
             </div>
             <div class="section-divider">
@@ -173,12 +175,11 @@ document.addEventListener('DOMContentLoaded', function() {
         nodeDiv.id = id;
 
         const title = container.classList.contains('circuitTreeContainer') ? `Troncal BT #${container.children.length + 1}` : `Derivación #${container.children.length + 1}`;
-        let sectionOptions = CONSTS.CABLE_SECTIONS.filter(s => parseFloat(s) >= 10).map(s => `<option value="${s}" ${s === "95" ? "selected" : ""}>${s} mm²</option>`).join('');
-
+        let sectionOptions = CONSTS.CABLE_SECTIONS.map(s => `<option value="${s}" ${s === "95" ? "selected" : ""}>${s} mm²</option>`).join('');
         
         nodeDiv.innerHTML = `
             <div class="node-content">
-                <div class="flex justify-between items-center mb-4"><h4 class="font-semibold text-gray-800">${title}</h4><button type="button" class="remove-btn text-red-500 hover:text-red-700 font-bold text-2xl" data-target="${id}">&times;</button></div>
+                <div class="flex justify-between items-center mb-4"><input type="text" value="${title}" class="node-name-input font-semibold text-gray-800 data-input"><button type="button" class="remove-btn text-red-500 hover:text-red-700 font-bold text-2xl" data-target="${id}">&times;</button></div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4">
                     <div class="input-group"><label>Sección</label><select class="cable-section-area-sc data-input">${sectionOptions}</select></div>
                     <div class="input-group"><label>Longitud [m]</label><input type="number" value="20" class="cable-length-sc data-input"></div>
@@ -197,7 +198,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function calculateAndDisplaySC() {
         let calculationLog = [];
-        exportData = [];
         const resultsContent = getById('resultsContentSC');
         resultsContent.innerHTML = '';
 
@@ -221,7 +221,7 @@ document.addEventListener('DOMContentLoaded', function() {
         calculationLog.push(`<strong>1. Acometida MT:</strong> Z_red = (1.1 * ${U_red_kv}² kV) / ${Scc_red_mva} MVA = ${Z_red_ohm.toFixed(5)} Ω`);
         
         document.querySelectorAll('.feeder-node').forEach((feederNode, index) => {
-            const feederName = `Alimentador #${index + 1}`;
+            const feederName = feederNode.querySelector('.node-name-input').value || `Alimentador #${index + 1}`;
             calculationLog.push(`<strong class="text-purple-700 mt-4 block border-t pt-4">--- INICIO CÁLCULO ${feederName.toUpperCase()} ---</strong>`);
             
             const S_tr_kva = parseFloat(feederNode.querySelector('.power').value) || 0;
@@ -293,7 +293,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const I_adm_cc = (k_icc * parseFloat(area)) / Math.sqrt(t);
         const passes = I_adm_cc >= Icc3;
 
-        const nodeTitle = nodeElement.querySelector('h4').textContent;
+        const nodeTitle = nodeElement.querySelector('.node-name-input').value;
         const pointName = `${parentName} → ${nodeTitle}`;
 
         addSCResult(pointName, voltage, R_total_at_node, X_total_at_node, { I_adm_cc, Icc3, passes });
