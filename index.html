@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora de Cortocircuito Profesional v14 (Nombres Editables)</title>
+    <title>Calculadora de Cortocircuito Profesional v15 (Exportar y Fullscreen)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -40,9 +40,13 @@
 <body class="bg-gray-100 text-gray-800">
 
     <div class="container mx-auto p-4 md:p-8 max-w-7xl">
-        <header class="text-center mb-8">
+        <header class="text-center mb-8 relative">
             <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Calculadora de Cortocircuito</h1>
             <p class="text-md text-gray-600 mt-2">Análisis con Alimentadores Múltiples y Derivaciones</p>
+            <button id="fullscreen-btn" class="absolute top-0 right-0 p-2 text-gray-500 hover:text-gray-800" title="Pantalla Completa">
+                <svg id="fs-enter-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 1v4m0 0h-4m4 0l-5-5" /></svg>
+                <svg id="fs-exit-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 4H4v6m0 0l6 6m-6-6h6m4 10h6v-6m0 0l-6-6m6 6v-6" /></svg>
+            </button>
         </header>
 
         <div class="mb-12">
@@ -75,7 +79,12 @@
                 </div>
 
                 <div id="resultsContainerSC" class="bg-white p-6 rounded-xl shadow-md">
-                    <div class="flex justify-between items-center"><h3 class="text-xl font-semibold mb-4 text-gray-800">Resultados</h3><button id="exportSCBtn" class="btn bg-green-600 hover:bg-green-700 text-white text-sm py-2 px-3">Exportar CSV</button></div>
+                    <div class="flex justify-between items-center"><h3 class="text-xl font-semibold mb-4 text-gray-800">Resultados</h3>
+                        <div class="flex gap-2">
+                             <button id="exportWordBtn" class="btn bg-blue-600 hover:bg-blue-700 text-white text-sm py-2 px-3">Word</button>
+                             <button id="exportSCBtn" class="btn bg-green-600 hover:bg-green-700 text-white text-sm py-2 px-3">CSV</button>
+                        </div>
+                    </div>
                     <div id="resultsPlaceholderSC" class="text-center text-gray-500 py-10"><svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V7a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg><p class="mt-4">Agregue un alimentador para comenzar.</p></div>
                     <div id="resultsContentSC"></div>
                 </div>
@@ -121,6 +130,7 @@ document.addEventListener('DOMContentLoaded', function() {
         TRAFO_VALUES: [{ s: "25-160", ucc: 4, ur: "2.8-1.47" },{ s: "200-315", ucc: 4, ur: "1.4-1.23" },{ s: "400-630", ucc: 4, ur: "1.15-1.03" },{ s: "800-1250", ucc: 5, ur: "1.1-1.05" },{ s: "1600-2500", ucc: 6, ur: "1.0-1.05" }]
     };
 
+    let exportData = [];
     const getById = id => document.getElementById(id);
 
     function addFeederNode() {
@@ -200,6 +210,7 @@ document.addEventListener('DOMContentLoaded', function() {
         let calculationLog = [];
         const resultsContent = getById('resultsContentSC');
         resultsContent.innerHTML = '';
+        exportData = [];
 
         const Scc_red_mva = parseFloat(getById('sccRed').value) || 0;
         const U_red_kv = parseFloat(getById('tensionRed').value) || 0;
@@ -334,6 +345,7 @@ document.addEventListener('DOMContentLoaded', function() {
             ${verificationHTML}
             <details class="mt-2 text-sm"><summary>Ver detalles de impedancia</summary><div class="log-box">Z_total: ${Z_total.toFixed(5)} Ω<br>R_total: ${R_total.toFixed(5)} Ω<br>X_total: ${X_total.toFixed(5)} Ω<br>R/X: ${ratio_RX.toFixed(3)}<br>Factor χ: ${kappa.toFixed(3)}</div></details>`;
         getById('resultsContentSC').appendChild(resultDiv);
+        exportData.push({pointName, icc: (Icc3 / 1000).toFixed(2), is: (Is / 1000).toFixed(2), z: Z_total.toFixed(5), r: R_total.toFixed(5), x: X_total.toFixed(5), rx: ratio_RX.toFixed(3), kappa: kappa.toFixed(3), i_adm_cc: verification ? (verification.I_adm_cc/1000).toFixed(2) : 'N/A', verifica: verification ? (verification.passes ? 'SI' : 'NO') : 'N/A' });
     }
     
     function displayCalculationLog(log) {
@@ -368,6 +380,56 @@ document.addEventListener('DOMContentLoaded', function() {
         link.click();
         document.body.removeChild(link);
     }
+
+    function handleExportWord() {
+        if (exportData.length === 0) {
+            alert("No hay datos para exportar.");
+            return;
+        }
+        let html = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>";
+        html += "<head><meta charset='utf-8'><title>Resultados de Cortocircuito</title>";
+        html += "<style> table, th, td { border: 1px solid black; border-collapse: collapse; } th, td { padding: 5px; } </style>";
+        html += "</head><body>";
+        html += "<h1>Resultados del Cálculo de Cortocircuito</h1>";
+        html += "<table><thead><tr>";
+        const headers = ["Punto de Falla", "Icc (kA)", "Is (kA)", "Verifica Icc?"];
+        headers.forEach(h => html += `<th>${h}</th>`);
+        html += "</tr></thead><tbody>";
+        exportData.forEach(d => {
+            html += `<tr><td>${d.pointName}</td><td>${d.icc}</td><td>${d.is}</td><td>${d.verifica}</td></tr>`;
+        });
+        html += "</tbody></table></body></html>";
+        
+        const blob = new Blob(['\ufeff', html], {
+            type: 'application/msword'
+        });
+        
+        const url = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(html);
+        const downloadLink = document.createElement("a");
+        document.body.appendChild(downloadLink);
+        downloadLink.href = url;
+        downloadLink.download = 'resultados_cortocircuito.doc';
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+    }
+
+    function toggleFullscreen() {
+        const elem = document.documentElement;
+        const enterIcon = getById('fs-enter-icon');
+        const exitIcon = getById('fs-exit-icon');
+
+        if (!document.fullscreenElement) {
+            elem.requestFullscreen().catch(err => {
+                alert(`Error al intentar activar pantalla completa: ${err.message} (${err.name})`);
+            });
+            enterIcon.classList.add('hidden');
+            exitIcon.classList.remove('hidden');
+        } else {
+            document.exitFullscreen();
+            enterIcon.classList.remove('hidden');
+            exitIcon.classList.add('hidden');
+        }
+    }
     
     function init() {
         populateAnnexTables();
@@ -376,6 +438,9 @@ document.addEventListener('DOMContentLoaded', function() {
             getById('transformerFeedersContainer').innerHTML = '';
             calculateAndDisplaySC();
         });
+        getById('exportSCBtn').addEventListener('click', handleExportSC);
+        getById('exportWordBtn').addEventListener('click', handleExportWord);
+        getById('fullscreen-btn').addEventListener('click', toggleFullscreen);
         
         getById('shortCircuitForm').addEventListener('input', e => {
             if (e.target.classList.contains('data-input')) calculateAndDisplaySC();
