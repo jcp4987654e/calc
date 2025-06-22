@@ -388,15 +388,24 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         let html = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>";
         html += "<head><meta charset='utf-8'><title>Resultados de Cortocircuito</title>";
-        html += "<style> table, th, td { border: 1px solid black; border-collapse: collapse; } th, td { padding: 5px; } </style>";
+        html += "<style> body{font-family: Arial, sans-serif;} table, th, td { border: 1px solid black; border-collapse: collapse; padding: 5px; text-align: center;} th { background-color: #f2f2f2; } </style>";
         html += "</head><body>";
         html += "<h1>Resultados del Cálculo de Cortocircuito</h1>";
-        html += "<table><thead><tr>";
-        const headers = ["Punto de Falla", "Icc (kA)", "Is (kA)", "Verifica Icc?"];
+        html += "<table width='100%'><thead><tr>";
+        const headers = ["Punto de Falla", "Icc (kA)", "Is (kA)", "Iadm_cc (kA)", "Verifica Icc?", "Z_total (Ω)", "R_total (Ω)", "X_total (Ω)"];
         headers.forEach(h => html += `<th>${h}</th>`);
         html += "</tr></thead><tbody>";
         exportData.forEach(d => {
-            html += `<tr><td>${d.pointName}</td><td>${d.icc}</td><td>${d.is}</td><td>${d.verifica}</td></tr>`;
+            html += `<tr>
+                        <td>${d.pointName}</td>
+                        <td>${d.icc}</td>
+                        <td>${d.is}</td>
+                        <td>${d.i_adm_cc}</td>
+                        <td>${d.verifica}</td>
+                        <td>${d.z}</td>
+                        <td>${d.r}</td>
+                        <td>${d.x}</td>
+                     </tr>`;
         });
         html += "</tbody></table></body></html>";
         
