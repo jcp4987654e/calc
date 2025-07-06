@@ -3,16 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora de Cortocircuito Profesional v15 (Exportar y Fullscreen)</title>
+    <title>Calculadora de Cortocircuito Profesional v18 (UI Mejorada y Anexo Ampliado)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root { --brand-color: #4f46e5; --brand-color-light: #eef2ff; }
         body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; }
         .input-group { margin-bottom: 1rem; }
         .input-group label { display: block; margin-bottom: 0.5rem; color: #4a5568; font-weight: 500; font-size: 0.875rem; }
-        .input-group input, .input-group select { width: 100%; padding: 0.75rem; border: 1px solid #d2d6dc; border-radius: 0.5rem; transition: border-color 0.2s; }
-        .input-group input:focus, .input-group select:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4); }
-        .btn { padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; transition: background-color 0.2s; display: inline-flex; align-items: center; justify-content: center; }
+        .input-group input, .input-group select { width: 100%; padding: 0.75rem; border: 1px solid #d2d6dc; border-radius: 0.5rem; transition: border-color 0.2s, box-shadow 0.2s; }
+        .input-group input:focus, .input-group select:focus { outline: none; border-color: var(--brand-color); box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.4); }
+        .btn { padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; transition: background-color 0.2s; display: inline-flex; align-items: center; justify-content: center; border: none; }
         .btn-sm { padding: 0.5rem 1rem; font-size: 0.875rem; }
         .result-card { background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 0.75rem; padding: 1.5rem; margin-top: 1rem; }
         .result-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid #e5e7eb; }
@@ -20,29 +21,51 @@
         .log-box { background-color: #f3f4f6; border: 1px solid #d1d5db; border-radius: 0.5rem; padding: 1rem; margin-top: 1rem; font-family: 'Courier New', Courier, monospace; font-size: 0.8rem; color: #1f2937; max-height: 200px; overflow-y: auto;}
         details > summary { cursor: pointer; font-weight: 500; color: #374151; }
         .section-divider { border-bottom: 1px solid #e5e7eb; margin-bottom: 1.5rem; padding-bottom: 1.5rem; }
-        .anexo-box { background-color: #eef2ff; border-top: 3px solid #6366f1; padding: 2rem; margin-top: 3rem; border-radius: 0.75rem; }
+        .anexo-box { background-color: var(--brand-color-light); border-top: 3px solid var(--brand-color); padding: 2rem; margin-top: 3rem; border-radius: 0.75rem; }
         .anexo-box h3 { font-size: 1.75rem; font-weight: 700; color: #4338ca; margin-bottom: 1.5rem; }
+        .anexo-box h4 { font-size: 1.25rem; font-weight: 600; color: #4338ca; margin-bottom: 0.75rem; margin-top: 1.5rem; }
+        .anexo-box p { color: #374151; line-height: 1.6; }
         table { width: 100%; text-align: left; border-collapse: collapse; font-size: 0.9rem; background-color: white; }
         th, td { padding: 0.75rem; border: 1px solid #d1d5db; text-align: center;}
         th { background-color: #e5e7eb; font-weight: 600; }
         .calculation-log-entry { padding: 0.75rem; border-bottom: 1px solid #e5e7eb; font-family: 'Courier New', monospace; font-size: 0.85rem; line-height: 1.5; }
         .calculation-log-entry:last-child { border-bottom: none; }
-        .calculation-log-entry strong { color: #4f46e5; }
-        .feeder-node { border: 2px solid #4338ca; border-radius: 0.75rem; padding: 1.5rem; margin-top: 1.5rem; background-color: #fafbff; }
+        .calculation-log-entry strong { color: var(--brand-color); }
+        .feeder-node { border: 2px solid var(--brand-color); border-radius: 0.75rem; padding: 1.5rem; margin-top: 1.5rem; background-color: #fafbff; }
         .cable-node { border: 1px solid #d1d5db; border-radius: 0.75rem; padding: 1rem; margin-top: 1rem; background-color: white; }
         .node-actions { margin-top: 1rem; display: flex; gap: 0.5rem; justify-content: flex-end; }
-        .children-container { margin-top: 1rem; margin-left: 1rem; padding-left: 1rem; border-left: 2px solid #6366f1; }
+        .children-container { margin-top: 1rem; margin-left: 1rem; padding-left: 1rem; border-left: 2px solid var(--brand-color); }
         .node-name-input { background-color: transparent; border: none; font-weight: bold; width: 100%; padding: 2px; border-radius: 3px; }
-        .node-name-input:hover { background-color: #f0f4ff; box-shadow: 0 0 0 1px #a5b4fc; }
-        .node-name-input:focus { outline: none; box-shadow: 0 1px #4f46e5; }
+        .node-name-input:hover { background-color: #f0f4ff; }
+        .node-name-input:focus { outline: none; box-shadow: 0 0 0 2px var(--brand-color); }
+        .input-error { border-color: #ef4444 !important; box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.4) !important; }
+
+        /* Estilos para el Diagrama Unifilar */
+        .diagram-container { display: flex; flex-direction: column; align-items: center; font-family: 'Courier New', monospace; font-size: 13px; padding: 1rem; }
+        .diagram-element { text-align: center; margin: 4px 0; }
+        .diagram-line { width: 2px; background-color: #374151; flex-shrink: 0; }
+        .diagram-bus { width: 90%; height: 5px; background-color: #1f2937; margin: 4px 0; border-radius: 2px; }
+        .diagram-children-wrapper { display: flex; flex-direction: row; justify-content: center; align-items: flex-start; width: 100%; }
+        .diagram-branch { display: flex; flex-direction: column; align-items: center; padding: 0 15px; flex-grow: 1; }
+        .diagram-label { background-color: #e0e7ff; padding: 3px 6px; border-radius: 4px; border: 1px solid #a5b4fc; white-space: nowrap; font-weight: 500; }
+        .diagram-point { color: #ef4444; font-weight: bold; font-size: 24px; margin: -10px 0; cursor: default; }
+        .diagram-icon { width: 40px; height: 40px; margin: 8px 0; }
+        #diagramModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); z-index: 1000; display: none; justify-content: center; align-items: center; }
+        #diagramModalContent { background-color: #f3f4f6; padding: 20px; border-radius: 10px; max-width: 95vw; max-height: 95vh; overflow: auto; }
+        #closeDiagramModal { position: absolute; top: 15px; right: 25px; font-size: 35px; color: white; cursor: pointer; }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
 
+    <div id="diagramModal">
+        <span id="closeDiagramModal">&times;</span>
+        <div id="diagramModalContent"></div>
+    </div>
+
     <div class="container mx-auto p-4 md:p-8 max-w-7xl">
         <header class="text-center mb-8 relative">
-            <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Calculadora de Cortocircuito</h1>
-            <p class="text-md text-gray-600 mt-2">Análisis con Alimentadores Múltiples y Derivaciones</p>
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Calculadora de Cortocircuito Profesional</h1>
+            <p class="text-md text-gray-600 mt-2">Análisis con Diagrama Unifilar Dinámico</p>
             <button id="fullscreen-btn" class="absolute top-0 right-0 p-2 text-gray-500 hover:text-gray-800" title="Pantalla Completa">
                 <svg id="fs-enter-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 1v4m0 0h-4m4 0l-5-5" /></svg>
                 <svg id="fs-exit-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 4H4v6m0 0l6 6m-6-6h6m4 10h6v-6m0 0l-6-6m6 6v-6" /></svg>
@@ -57,45 +80,64 @@
                     <form id="shortCircuitForm">
                         <div class="section-divider">
                             <h3 class="text-xl font-semibold mb-4 text-gray-800">1. Red de Distribución (MT)</h3>
-                            <div class="input-group"><label for="sccRed">Scc Red [MVA]</label><input type="number" id="sccRed" value="250" class="data-input"></div>
-                            <div class="input-group"><label for="tensionRed">Tensión Red [kV]</label><input type="number" id="tensionRed" value="13.2" class="data-input"></div>
+                            <div class="input-group"><label for="sccRed">Scc Red [MVA]</label><input type="number" id="sccRed" value="250" min="1" class="data-input"></div>
+                            <div class="input-group"><label for="tensionRed">Tensión Red [kV]</label><input type="number" id="tensionRed" value="13.2" min="1" class="data-input"></div>
                         </div>
 
-                        <div id="transformerFeedersContainer">
-                            <!-- Los alimentadores a transformadores se añadirán aquí -->
-                        </div>
+                        <div id="transformerFeedersContainer"></div>
                         
                         <div class="mt-6 flex space-x-4">
                             <button type="button" id="addFeederBtn" class="btn bg-purple-600 hover:bg-purple-700 text-white w-full">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" /></svg>
-                                Agregar Alimentador a Trafo
+                                Agregar Alimentador
                             </button>
                              <button type="button" id="resetButtonSC" class="btn bg-red-600 hover:bg-red-700 text-white">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 110 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" /></svg>
-                                Reiniciar Todo
+                                Reiniciar
                             </button>
                         </div>
                     </form>
                 </div>
 
-                <div id="resultsContainerSC" class="bg-white p-6 rounded-xl shadow-md">
-                    <div class="flex justify-between items-center"><h3 class="text-xl font-semibold mb-4 text-gray-800">Resultados</h3>
-                        <div class="flex gap-2">
-                             <button id="exportWordBtn" class="btn bg-blue-600 hover:bg-blue-700 text-white text-sm py-2 px-3">Word</button>
-                             <button id="exportSCBtn" class="btn bg-green-600 hover:bg-green-700 text-white text-sm py-2 px-3">CSV</button>
+                <div class="space-y-8">
+                    <div id="resultsContainerSC" class="bg-white p-6 rounded-xl shadow-md">
+                        <div class="flex justify-between items-center"><h3 class="text-xl font-semibold mb-4 text-gray-800">Resultados</h3>
+                            <div class="flex gap-2">
+                                 <button id="exportWordBtn" class="btn bg-blue-600 hover:bg-blue-700 text-white text-sm py-2 px-3">Word</button>
+                                 <button id="exportSCBtn" class="btn bg-green-600 hover:bg-green-700 text-white text-sm py-2 px-3">CSV</button>
+                            </div>
+                        </div>
+                        <div id="resultsPlaceholderSC" class="text-center text-gray-500 py-10"><svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V7a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg><p class="mt-4">Agregue un alimentador para comenzar.</p></div>
+                        <div id="resultsContentSC"></div>
+                    </div>
+                    <div id="diagramCard" class="bg-white p-6 rounded-xl shadow-md">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-semibold text-gray-800">Diagrama Unifilar</h3>
+                            <button id="fullscreenDiagramBtn" class="btn btn-sm bg-gray-200 hover:bg-gray-300 text-gray-700" title="Ver en Pantalla Completa">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 1v4m0 0h-4m4 0l-5-5" /></svg>
+                            </button>
+                        </div>
+                        <div id="diagramContainerWrapper" class="p-4 border rounded-lg bg-gray-50 min-h-[400px] overflow-x-auto">
+                            <div id="diagramContainer"></div>
                         </div>
                     </div>
-                    <div id="resultsPlaceholderSC" class="text-center text-gray-500 py-10"><svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V7a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg><p class="mt-4">Agregue un alimentador para comenzar.</p></div>
-                    <div id="resultsContentSC"></div>
                 </div>
             </div>
         </div>
 
         <div id="anexo" class="anexo-box">
             <h3>Anexo Técnico</h3>
+            <div>
+                <h4>Fundamentos Normativos (IRAM / AEA)</h4>
+                <p>El cálculo de corrientes de cortocircuito es un requisito fundamental de la <strong>Reglamentación para la Ejecución de Instalaciones Eléctricas en Inmuebles AEA 90364</strong>. El objetivo es asegurar que todos los componentes de la instalación (cables, interruptores, tableros) puedan soportar los esfuerzos térmicos y dinámicos producidos por una falla. Esta calculadora aplica el <strong>método de las impedancias</strong>, que consiste en sumar todas las impedancias (Red, transformadores, cables) desde la fuente hasta el punto de falla para determinar la corriente de cortocircuito máxima (Icc). La verificación del cable se realiza según la fórmula de solicitación térmica adiabática (I²t), especificada en la norma <strong>IRAM 2178</strong>, asegurando que la energía que el cable puede soportar ($K^2S^2$) sea mayor a la energía que deja pasar la protección ($I_{cc}^2t$).</p>
+            </div>
+             <div>
+                <h4>Aporte de Motores al Cortocircuito</h4>
+                <p>Durante un cortocircuito, la tensión del sistema cae bruscamente. En ese instante, los motores de inducción, por su inercia y el campo magnético remanente en su rotor, dejan de consumir energía y comienzan a funcionar como generadores, aportando corriente a la falla. Este aporte es de corta duración (típicamente unos pocos ciclos) pero significativo. Según la bibliografía técnica, se estima que un motor puede aportar una corriente de entre <strong>4 a 6 veces su corriente nominal (In)</strong>. Esta calculadora utiliza un factor conservador de 5. Es crucial considerar este aporte, ya que la corriente total que debe interrumpir una protección en un tablero no es solo la que proviene de la red, sino la suma de la corriente de la red más la de todos los motores aguas abajo del punto de falla.</p>
+            </div>
              <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-6">
-                <div> <h4 class="text-lg font-semibold mb-2 text-indigo-700">Factor de Impulso χ (Kappa)</h4> <div class="overflow-x-auto"> <table id="kappaTable"></table> </div> </div>
-                <div> <h4 class="text-lg font-semibold mb-2 text-indigo-700">Valores Típicos para Transformadores</h4> <div class="overflow-x-auto"> <table id="trafoTable"></table> </div> </div>
+                 <div> <h4 class="text-lg font-semibold mb-2 text-indigo-700">Factor de Impulso χ (Kappa)</h4> <div class="overflow-x-auto"> <table id="kappaTable"></table> </div> </div>
+                 <div> <h4 class="text-lg font-semibold mb-2 text-indigo-700">Valores Típicos para Transformadores</h4> <div class="overflow-x-auto"> <table id="trafoTable"></table> </div> </div>
             </div>
             <div class="mt-8">
                 <h4 class="text-lg font-semibold mb-2 text-indigo-700">Memoria de Cálculo (Paso a Paso)</h4>
@@ -109,29 +151,36 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     
+    // --- CONSTANTES Y DATOS DE TABLAS ---
     const CONSTS = {
         CABLE_SECTIONS: ["1.5", "2.5", "4", "6", "10", "16", "25", "35", "50", "70", "95", "120", "150", "185", "240", "300", "400", "500", "630"],
-        CABLE_RESISTANCE: {
+        CABLE_RESISTANCE: { // Resistencia en Ω/km a T° de servicio (70°C para PVC, 90°C para XLPE)
             cobre: {
                 pvc:  {'1.5':15.91,'2.5':9.55,'4':5.92,'6':3.95,'10':2.29,'16':1.48,'25':0.934,'35':0.663,'50':0.463,'70':0.326,'95':0.248,'120':0.195,'150':0.157,'185':0.13,'240':0.1, '300': 0.082, '400': 0.062, '500': 0.051, '630': 0.041},
                 xlpe: {'1.5':16.96,'2.5':10.18,'4':6.31,'6':4.21,'10':2.44,'16':1.54,'25':0.995,'35':0.707,'50':0.493,'70':0.348,'95':0.264,'120':0.207,'150':0.167,'185':0.138,'240':0.106, '300': 0.086, '400': 0.064, '500': 0.052, '630': 0.042}
             },
-            aluminio: {
-                pvc:  {'16':2.427,'25':1.531,'35':1.087,'50':0.759,'70':0.534,'95':0.402,'120':0.32,'150':0.257,'185':0.213,'240':0.164, '300': 0.128, '400': 0.102, '500': 0.084, '630': 0.067},
-                xlpe: {'16':2.525,'25':1.631,'35':1.159,'50':0.808,'70':0.569,'95':0.433,'120':0.339,'150':0.274,'185':0.226,'240':0.174, '300': 0.140, '400': 0.106, '500': 0.087, '630': 0.069}
+            aluminio: { // Valores ajustados según documentación (Apuntes Ing. Massa, Tabla Resistencia Unipolares)
+                pvc:  {'16':2.392,'25':1.513,'35':1.093,'50':0.800,'70':0.558,'95':0.403,'120':0.321,'150':0.262,'185':0.209,'240':0.161, '300': 0.128, '400': 0.102, '500': 0.084, '630': 0.067},
+                xlpe: {'16':2.392,'25':1.513,'35':1.093,'50':0.800,'70':0.558,'95':0.403,'120':0.321,'150':0.262,'185':0.209,'240':0.161, '300': 0.128, '400': 0.102, '500': 0.084, '630': 0.067}
             }
         },
-        CABLE_REACTANCE: { 
+        CABLE_REACTANCE: { // Reactancia en Ω/km
             unipolar: {'1.5':0.08,'2.5':0.08,'4':0.08,'6':0.078,'10':0.136,'16':0.126,'25':0.117,'35':0.111,'50':0.106,'70':0.1,'95':0.095,'120':0.091,'150':0.086,'185':0.083,'240':0.081, '300': 0.083, '400': 0.081, '500': 0.080, '630': 0.079},
             tripolar: {'1.5':0.08,'2.5':0.08,'4':0.08,'6':0.078,'10':0.115,'16':0.107,'25':0.1,'35':0.095,'50':0.091,'70':0.086,'95':0.083,'120':0.081,'150':0.079,'185':0.079,'240':0.076, '300': 0.075, '400': 0.074, '500': 0.073, '630': 0.072}
         },
         K_FACTOR_CC: { cobre: { pvc: 115, xlpe: 143 }, aluminio: { pvc: 76, xlpe: 94 }},
         KAPPA_TABLE: [{r:0,k:2},{r:0.1,k:1.86},{r:0.2,k:1.71},{r:0.3,k:1.57},{r:0.4,k:1.45},{r:0.5,k:1.35},{r:0.6,k:1.26},{r:0.7,k:1.19},{r:0.8,k:1.13},{r:0.9,k:1.08},{r:1,k:1.04},{r:1.1,k:1.02},{r:1.2,k:1.01}],
-        TRAFO_VALUES: [{ s: "25-160", ucc: 4, ur: "2.8-1.47" },{ s: "200-315", ucc: 4, ur: "1.4-1.23" },{ s: "400-630", ucc: 4, ur: "1.15-1.03" },{ s: "800-1250", ucc: 5, ur: "1.1-1.05" },{ s: "1600-2500", ucc: 6, ur: "1.0-1.05" }]
+        TRAFO_VALUES: [{ s: "25-160", ucc: 4, ur: "2.8-1.47" },{ s: "200-315", ucc: 4, ur: "1.4-1.23" },{ s: "400-630", ucc: 4, ur: "1.15-1.03" },{ s: "800-1250", ucc: 5, ur: "1.1-1.05" },{ s: "1600-2500", ucc: 6, ur: "1.0-1.05" }],
+        ICONS: {
+            TRANSFORMER: `<svg class="diagram-icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" stroke-width="3" stroke="#000000" fill="none"><circle cx="26" cy="32" r="14"/><circle cx="38" cy="32" r="14"/></svg>`,
+            MOTOR: `<svg class="diagram-icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" stroke-width="3" stroke="#000000" fill="none"><circle cx="32" cy="32" r="18"/><text x="25" y="42" font-family="Arial" font-size="24" font-weight="bold" fill="#000000">M</text></svg>`
+        }
     };
 
     let exportData = [];
     const getById = id => document.getElementById(id);
+
+    // --- CREACIÓN DE NODOS DINÁMICOS ---
 
     function addFeederNode() {
         const container = getById('transformerFeedersContainer');
@@ -160,10 +209,10 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="section-divider">
                 <h4 class="text-xl font-semibold mb-4 text-gray-800">3. Transformador MT/BT</h4>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
-                    <div class="input-group"><label>Potencia [kVA]</label><input type="number" value="630" class="power data-input"></div>
-                    <div class="input-group"><label>Tensión Sec. [V]</label><input type="number" value="400" class="voltage data-input"></div>
-                    <div class="input-group"><label>Ucc (%)</label><input type="number" value="4" class="impedance data-input"></div>
-                    <div class="input-group"><label>Ur (%)</label><input type="number" value="1.1" class="ur_percent data-input"></div>
+                    <div class="input-group"><label>Potencia [kVA]</label><input type="number" value="630" min="1" class="power data-input"></div>
+                    <div class="input-group"><label>Tensión Sec. [V]</label><input type="number" value="400" min="1" class="voltage data-input"></div>
+                    <div class="input-group"><label>Ucc (%)</label><input type="number" value="4" min="0.1" step="any" class="impedance data-input"></div>
+                    <div class="input-group"><label>Ur (%)</label><input type="number" value="1.1" min="0.1" step="any" class="ur_percent data-input"></div>
                 </div>
             </div>
             <div>
@@ -192,11 +241,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="flex justify-between items-center mb-4"><input type="text" value="${title}" class="node-name-input font-semibold text-gray-800 data-input"><button type="button" class="remove-btn text-red-500 hover:text-red-700 font-bold text-2xl" data-target="${id}">&times;</button></div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4">
                     <div class="input-group"><label>Sección</label><select class="cable-section-area-sc data-input">${sectionOptions}</select></div>
-                    <div class="input-group"><label>Longitud [m]</label><input type="number" value="20" class="cable-length-sc data-input"></div>
+                    <div class="input-group"><label>Longitud [m]</label><input type="number" value="20" min="0" class="cable-length-sc data-input"></div>
                     <div class="input-group"><label>Material</label><select class="cable-material-sc data-input"><option value="cobre" selected>Cobre</option><option value="aluminio">Aluminio</option></select></div>
                     <div class="input-group"><label>Aislación</label><select class="cable-insulation-sc data-input"><option value="xlpe" selected>XLPE</option><option value="pvc">PVC</option></select></div>
                     <div class="input-group"><label>Tipo</label><select class="cable-type-sc data-input"><option value="tripolar" selected>Tripolar</option><option value="unipolar">3 Unipolares</option></select></div>
-                    <div class="input-group"><label>Tiempo Despeje [s]</label><input type="number" value="0.1" step="0.01" class="protection-time-sc data-input"></div>
+                    <div class="input-group"><label>Tiempo Despeje [s]</label><input type="number" value="0.1" min="0.01" step="0.01" class="protection-time-sc data-input"></div>
+                </div>
+                <div class="mt-2 p-3 bg-indigo-50 rounded-lg">
+                     <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" class="motor-contribution-cb data-input form-checkbox h-5 w-5 text-indigo-600">
+                        <span class="text-sm font-medium text-gray-700">Aporte de Motor al CC</span>
+                    </label>
+                    <div class="motor-input-container hidden mt-2">
+                        <div class="input-group !mb-0"><label>In Motor [A]</label><input type="number" value="100" min="0" class="motor-in-sc data-input"></div>
+                    </div>
                 </div>
             </div>
             <div class="node-actions"><button type="button" class="add-branch-btn btn btn-sm bg-indigo-600 hover:bg-indigo-700 text-white">Agregar Derivación</button></div>
@@ -205,6 +263,8 @@ document.addEventListener('DOMContentLoaded', function() {
         container.appendChild(nodeDiv);
         calculateAndDisplaySC();
     }
+
+    // --- LÓGICA DE CÁLCULO PRINCIPAL ---
 
     function calculateAndDisplaySC() {
         let calculationLog = [];
@@ -218,12 +278,14 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!Scc_red_mva || !U_red_kv || getById('transformerFeedersContainer').children.length === 0) {
             getById('resultsPlaceholderSC').style.display = 'block';
             resultsContent.style.display = 'none';
+            getById('diagramCard').style.display = 'none';
             displayCalculationLog([]);
             return;
         }
         
         getById('resultsPlaceholderSC').style.display = 'none';
         resultsContent.style.display = 'block';
+        getById('diagramCard').style.display = 'block';
 
         const Z_red_ohm = (1.1 * U_red_kv ** 2) / Scc_red_mva;
         const X_red_ohm = Z_red_ohm / 1.005; 
@@ -240,7 +302,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const Zcc_tr_percent = parseFloat(feederNode.querySelector('.impedance').value) || 0;
             const Ur_tr_percent = parseFloat(feederNode.querySelector('.ur_percent').value) || 0;
 
-            if (!S_tr_kva || !U_tr_v) return;
+            if (!S_tr_kva || !U_tr_v || !Zcc_tr_percent || !Ur_tr_percent) return;
 
             let R_cable_mt = 0, X_cable_mt = 0;
             const length_mt_m = parseFloat(feederNode.querySelector('.cable-length-mt').value) || 0;
@@ -248,7 +310,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const area_mt = feederNode.querySelector('.cable-section-area-mt').value;
                 const type_mt = feederNode.querySelector('.cable-type-mt').value;
                 const material_mt = feederNode.querySelector('.cable-material-mt').value;
-                const insulation_mt = "xlpe";
+                const insulation_mt = "xlpe"; // Se asume XLPE para MT
                 const r_km = CONSTS.CABLE_RESISTANCE[material_mt]?.[insulation_mt]?.[area_mt] || 0;
                 const x_km = CONSTS.CABLE_REACTANCE[type_mt]?.[area_mt] || 0;
                 R_cable_mt = r_km * (length_mt_m / 1000);
@@ -280,6 +342,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
         displayCalculationLog(calculationLog);
+        drawDiagram();
     }
     
     function recursiveCalculate(nodeElement, parentName, parentR, parentX, log, voltage) {
@@ -298,41 +361,62 @@ document.addEventListener('DOMContentLoaded', function() {
         const R_total_at_node = parentR + R_cable;
         const X_total_at_node = parentX + X_cable;
         const Z_total = Math.sqrt(R_total_at_node**2 + X_total_at_node**2);
-        const Icc3 = Z_total > 0 ? (voltage / (Math.sqrt(3) * Z_total)) : 0;
+        const Icc_source = Z_total > 0 ? (voltage / (Math.sqrt(3) * Z_total)) : 0;
         
+        let Icc_from_downstream_motors = 0;
+        const motorCb = nodeElement.querySelector('.motor-contribution-cb');
+        if (motorCb && motorCb.checked) {
+            const motorIn = parseFloat(nodeElement.querySelector('.motor-in-sc').value) || 0;
+            Icc_from_downstream_motors += motorIn * 5;
+        }
+
+        const childrenContainer = nodeElement.querySelector('.children-container');
+        childrenContainer.querySelectorAll(':scope > .cable-node').forEach((childNode) => {
+            Icc_from_downstream_motors += recursiveCalculate(childNode, nodeElement.querySelector('.node-name-input').value, R_total_at_node, X_total_at_node, log, voltage);
+        });
+        
+        const Icc_total_through_cable = Icc_source + Icc_from_downstream_motors;
+
         const k_icc = CONSTS.K_FACTOR_CC[material]?.[insulation] || 0;
         const I_adm_cc = (k_icc * parseFloat(area)) / Math.sqrt(t);
-        const passes = I_adm_cc >= Icc3;
+        const passes = I_adm_cc >= Icc_total_through_cable;
+
+        const sectionSelect = nodeElement.querySelector('.cable-section-area-sc');
+        sectionSelect.classList.toggle('input-error', !passes);
 
         const nodeTitle = nodeElement.querySelector('.node-name-input').value;
         const pointName = `${parentName} → ${nodeTitle}`;
 
-        addSCResult(pointName, voltage, R_total_at_node, X_total_at_node, { I_adm_cc, Icc3, passes });
+        addSCResult(pointName, voltage, R_total_at_node, X_total_at_node, { 
+            I_adm_cc, Icc_source, Icc_motor: Icc_from_downstream_motors, Icc_total: Icc_total_through_cable, passes 
+        });
         log.push(`<strong>Punto ${nodeTitle}:</strong> R_cable=${R_cable.toFixed(5)}, X_cable=${X_cable.toFixed(5)}<br>↳ R_total=${R_total_at_node.toFixed(5)}, X_total=${X_total_at_node.toFixed(5)}`);
         
-        const childrenContainer = nodeElement.querySelector('.children-container');
-        childrenContainer.querySelectorAll(':scope > .cable-node').forEach((childNode) => {
-            recursiveCalculate(childNode, nodeTitle, R_total_at_node, X_total_at_node, log, voltage);
-        });
+        return Icc_from_downstream_motors;
     }
+
+    // --- FUNCIONES DE VISUALIZACIÓN Y UTILIDADES ---
 
     function addSCResult(pointName, voltage_v, R_total, X_total, verification) {
         const Z_total = Math.sqrt(R_total**2 + X_total**2);
-        const Icc3 = Z_total > 0 ? (voltage_v / (Math.sqrt(3) * Z_total)) : 0;
+        const Icc_source = verification ? verification.Icc_source : (Z_total > 0 ? (voltage_v / (Math.sqrt(3) * Z_total)) : 0);
         const ratio_RX = X_total > 0 ? (R_total / X_total) : 0;
         const kappa = getKappaFactor(ratio_RX);
-        const Is = kappa * Math.sqrt(2) * Icc3;
+        const Is = kappa * Math.sqrt(2) * Icc_source;
 
         let verificationHTML = '';
         if (verification) {
-            const { I_adm_cc, passes } = verification;
+            const { I_adm_cc, Icc_motor, Icc_total, passes } = verification;
             const resultClass = passes ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
             verificationHTML = `
+                <div class="result-item text-sm"><span>Icc Aporte Red:</span><span class="font-bold">${(Icc_source / 1000).toFixed(2)} kA</span></div>
+                <div class="result-item text-sm"><span>Icc Aporte Motores:</span><span class="font-bold">${(Icc_motor / 1000).toFixed(2)} kA</span></div>
+                <div class="result-item"><span>Icc Total (para verificación):</span><span class="font-bold text-lg text-blue-600">${(Icc_total / 1000).toFixed(2)} kA</span></div>
                 <div class="mt-4 p-3 rounded-lg text-center font-bold text-lg ${resultClass}">
-                    Verificación Icc: ${passes ? 'VERIFICA' : 'NO VERIFICA'}
+                    Verificación por Cortocircuito (Efecto Térmico): ${passes ? 'VERIFICA' : 'NO VERIFICA'}
                 </div>
                 <div class="text-xs text-center mt-1 text-gray-600">
-                    Iadm_cc: ${(I_adm_cc / 1000).toFixed(2)} kA vs. Icc: ${(Icc3 / 1000).toFixed(2)} kA
+                    Iadm_cc: ${(I_adm_cc / 1000).toFixed(2)} kA vs. Icc Total: ${(Icc_total / 1000).toFixed(2)} kA
                 </div>
             `;
         }
@@ -340,12 +424,15 @@ document.addEventListener('DOMContentLoaded', function() {
         const resultDiv = document.createElement('div');
         resultDiv.className = 'result-card';
         resultDiv.innerHTML = `<h4 class="text-lg font-semibold text-indigo-600 mb-3">${pointName}</h4>
-            <div class="result-item"><span>Icc Calculada:</span><span class="font-bold text-xl text-red-600">${(Icc3 / 1000).toFixed(2)} kA</span></div>
+            <div class="result-item"><span>Icc en Punto (aporte red):</span><span class="font-bold text-xl text-red-600">${(Icc_source / 1000).toFixed(2)} kA</span></div>
             <div class="result-item"><span>Corriente de Impulso (Is):</span><span class="font-bold text-xl text-purple-600">${(Is / 1000).toFixed(2)} kA</span></div>
             ${verificationHTML}
             <details class="mt-2 text-sm"><summary>Ver detalles de impedancia</summary><div class="log-box">Z_total: ${Z_total.toFixed(5)} Ω<br>R_total: ${R_total.toFixed(5)} Ω<br>X_total: ${X_total.toFixed(5)} Ω<br>R/X: ${ratio_RX.toFixed(3)}<br>Factor χ: ${kappa.toFixed(3)}</div></details>`;
         getById('resultsContentSC').appendChild(resultDiv);
-        exportData.push({pointName, icc: (Icc3 / 1000).toFixed(2), is: (Is / 1000).toFixed(2), z: Z_total.toFixed(5), r: R_total.toFixed(5), x: X_total.toFixed(5), rx: ratio_RX.toFixed(3), kappa: kappa.toFixed(3), i_adm_cc: verification ? (verification.I_adm_cc/1000).toFixed(2) : 'N/A', verifica: verification ? (verification.passes ? 'SI' : 'NO') : 'N/A' });
+        
+        exportData.push({
+            pointName, icc_source: (Icc_source / 1000).toFixed(2), is: (Is / 1000).toFixed(2), z: Z_total.toFixed(5), r: R_total.toFixed(5), x: X_total.toFixed(5), rx: ratio_RX.toFixed(3), kappa: kappa.toFixed(3), i_adm_cc: verification ? (verification.I_adm_cc/1000).toFixed(2) : 'N/A', icc_motor: verification ? (verification.Icc_motor/1000).toFixed(2) : 'N/A', icc_total: verification ? (verification.Icc_total/1000).toFixed(2) : 'N/A', verifica: verification ? (verification.passes ? 'SI' : 'NO') : 'N/A' 
+        });
     }
     
     function displayCalculationLog(log) {
@@ -364,44 +451,175 @@ document.addEventListener('DOMContentLoaded', function() {
         if(getById('trafoTable')) getById('trafoTable').innerHTML = createTable(CONSTS.TRAFO_VALUES, ['S [kVA]', 'Ucc [%]', 'Ur [%]']);
     }
     
-    function handleExportSC() {
-        if (exportData.length === 0) {
-            alert("No hay datos para exportar.");
-            return;
+    // --- DIAGRAMA UNIFILAR ---
+
+    function drawDiagram() {
+        const diagramContainer = getById('diagramContainer');
+        diagramContainer.innerHTML = ''; 
+        diagramContainer.className = 'diagram-container';
+
+        const networkEl = document.createElement('div');
+        networkEl.className = 'diagram-element diagram-label';
+        networkEl.innerHTML = `Red MT (${getById('sccRed').value} MVA / ${getById('tensionRed').value} kV)`;
+        diagramContainer.appendChild(networkEl);
+        
+        const feedersContainer = document.createElement('div');
+        feedersContainer.className = 'diagram-children-wrapper';
+        diagramContainer.appendChild(feedersContainer);
+
+        document.querySelectorAll('.feeder-node').forEach(feederNode => {
+            const feederBranch = document.createElement('div');
+            feederBranch.className = 'diagram-branch';
+            feedersContainer.appendChild(feederBranch);
+
+            let line = document.createElement('div');
+            line.className = 'diagram-line';
+            line.style.height = '20px';
+            feederBranch.appendChild(line);
+            
+            let point = document.createElement('div');
+            point.className = 'diagram-point';
+            point.innerHTML = '→';
+            point.title = 'Punto de Falla: Acometida MT';
+            feederBranch.appendChild(point);
+
+            const length_mt_m = feederNode.querySelector('.cable-length-mt').value;
+            if (length_mt_m > 0) {
+                line = document.createElement('div');
+                line.className = 'diagram-line';
+                line.style.height = '30px';
+                feederBranch.appendChild(line);
+                const label = document.createElement('div');
+                label.className = 'diagram-element diagram-label';
+                label.innerText = `Cable MT: ${length_mt_m}m`;
+                feederBranch.appendChild(label);
+            }
+
+            point = document.createElement('div');
+            point.className = 'diagram-point';
+            point.innerHTML = '→';
+            point.title = 'Punto de Falla: Bornes MT Trafo';
+            feederBranch.appendChild(point);
+
+            const trafoEl = document.createElement('div');
+            trafoEl.className = 'diagram-element';
+            const trafoPower = feederNode.querySelector('.power').value;
+            trafoEl.innerHTML = CONSTS.ICONS.TRANSFORMER + `<div class="diagram-label">${trafoPower} kVA</div>`;
+            feederBranch.appendChild(trafoEl);
+
+            point = document.createElement('div');
+            point.className = 'diagram-point';
+            point.innerHTML = '→';
+            point.title = 'Punto de Falla: Bornes BT Trafo';
+            feederBranch.appendChild(point);
+
+            const busbar = document.createElement('div');
+            busbar.className = 'diagram-bus';
+            feederBranch.appendChild(busbar);
+
+            const btTrunksContainer = document.createElement('div');
+            btTrunksContainer.className = 'diagram-children-wrapper';
+            feederBranch.appendChild(btTrunksContainer);
+
+            const circuitTreeContainer = feederNode.querySelector('.circuitTreeContainer');
+            circuitTreeContainer.querySelectorAll(':scope > .cable-node').forEach(node => {
+                recursiveDrawNode(node, btTrunksContainer);
+            });
+        });
+    }
+
+    function recursiveDrawNode(nodeElement, parentDiagramContainer) {
+        const branchContainer = document.createElement('div');
+        branchContainer.className = 'diagram-branch';
+        parentDiagramContainer.appendChild(branchContainer);
+
+        let line = document.createElement('div');
+        line.className = 'diagram-line';
+        line.style.height = '20px';
+        branchContainer.appendChild(line);
+
+        const cableName = nodeElement.querySelector('.node-name-input').value;
+        const cableLength = nodeElement.querySelector('.cable-length-sc').value;
+        const cableSection = nodeElement.querySelector('.cable-section-area-sc').value;
+        const label = document.createElement('div');
+        label.className = 'diagram-element diagram-label';
+        label.innerText = `${cableName} (${cableLength}m, ${cableSection}mm²)`;
+        branchContainer.appendChild(label);
+
+        line = document.createElement('div');
+        line.className = 'diagram-line';
+        line.style.height = '20px';
+        branchContainer.appendChild(line);
+
+        const point = document.createElement('div');
+        point.className = 'diagram-point';
+        point.innerHTML = '→';
+        point.title = `Punto de Falla: ${cableName}`;
+        branchContainer.appendChild(point);
+
+        const childrenContainer = nodeElement.querySelector('.children-container');
+        const childrenNodes = childrenContainer.querySelectorAll(':scope > .cable-node');
+
+        if (childrenNodes.length > 0) {
+            const busbar = document.createElement('div');
+            busbar.className = 'diagram-bus';
+            branchContainer.appendChild(busbar);
+
+            const newParentContainer = document.createElement('div');
+            newParentContainer.className = 'diagram-children-wrapper';
+            branchContainer.appendChild(newParentContainer);
+
+            childrenNodes.forEach(childNode => {
+                recursiveDrawNode(childNode, newParentContainer);
+            });
         }
-        const headers = ["Punto de Falla", "Icc (kA)", "Is (kA)", "Iadm_cc (kA)", "Verifica Icc?", "Z_total (Ω)", "R_total (Ω)", "X_total (Ω)", "R/X", "Factor χ"];
-        const rows = [headers, ...exportData.map(d => [d.pointName, d.icc, d.is, d.i_adm_cc, d.verifica, d.z, d.r, d.x, d.rx, d.kappa])];
+
+        const motorCb = nodeElement.querySelector('.motor-contribution-cb');
+        if (motorCb && motorCb.checked) {
+            const motorEl = document.createElement('div');
+            motorEl.className = 'diagram-element';
+            const motorIn = nodeElement.querySelector('.motor-in-sc').value;
+            motorEl.innerHTML = CONSTS.ICONS.MOTOR + `<div class="diagram-label">Motor (${motorIn}A)</div>`;
+            branchContainer.appendChild(motorEl);
+        }
+    }
+
+    // --- EXPORTACIÓN Y OTROS ---
+
+    function handleExportSC() {
+        if (exportData.length === 0) { alert("No hay datos para exportar."); return; }
+        const headers = ["Punto de Falla", "Icc Red (kA)", "Icc Motores (kA)", "Icc Total Verif. (kA)", "Is (kA)", "Iadm_cc (kA)", "Verifica Icc?", "Z_total (Ω)", "R_total (Ω)", "X_total (Ω)", "R/X", "Factor χ"];
+        const rows = [headers, ...exportData.map(d => [d.pointName, d.icc_source, d.icc_motor, d.icc_total, d.is, d.i_adm_cc, d.verifica, d.z, d.r, d.x, d.rx, d.kappa])];
         const processRow = row => row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(';');
         const csvContent = "data:text/csv;charset=utf-8," + rows.map(processRow).join('\n');
         const link = document.createElement("a");
         link.setAttribute("href", encodeURI(csvContent));
-        link.setAttribute("download", 'resultados_cortocircuito.csv');
+        link.setAttribute("download", 'resultados_cortocircuito_v18.csv');
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
     }
 
     function handleExportWord() {
-        if (exportData.length === 0) {
-            alert("No hay datos para exportar.");
-            return;
-        }
+        if (exportData.length === 0) { alert("No hay datos para exportar."); return; }
         let html = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>";
         html += "<head><meta charset='utf-8'><title>Resultados de Cortocircuito</title>";
         html += "<style> body{font-family: Arial, sans-serif;} table, th, td { border: 1px solid black; border-collapse: collapse; padding: 5px; text-align: center;} th { background-color: #f2f2f2; } </style>";
         html += "</head><body>";
         html += "<h1>Resultados del Cálculo de Cortocircuito</h1>";
         html += "<table width='100%'><thead><tr>";
-        const headers = ["Punto de Falla", "Icc (kA)", "Is (kA)", "Iadm_cc (kA)", "Verifica Icc?", "Z_total (Ω)", "R_total (Ω)", "X_total (Ω)"];
+        const headers = ["Punto", "Icc Red (kA)", "Icc Motores (kA)", "Icc Total (kA)", "Is (kA)", "Iadm_cc (kA)", "Verifica?", "Z (Ω)", "R (Ω)", "X (Ω)"];
         headers.forEach(h => html += `<th>${h}</th>`);
         html += "</tr></thead><tbody>";
         exportData.forEach(d => {
             html += `<tr>
                         <td>${d.pointName}</td>
-                        <td>${d.icc}</td>
+                        <td>${d.icc_source}</td>
+                        <td>${d.icc_motor}</td>
+                        <td>${d.icc_total}</td>
                         <td>${d.is}</td>
                         <td>${d.i_adm_cc}</td>
-                        <td>${d.verifica}</td>
+                        <td style="background-color:${d.verifica === 'SI' ? '#dcfce7' : '#fee2e2'};">${d.verifica}</td>
                         <td>${d.z}</td>
                         <td>${d.r}</td>
                         <td>${d.x}</td>
@@ -409,36 +627,26 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         html += "</tbody></table></body></html>";
         
-        const blob = new Blob(['\ufeff', html], {
-            type: 'application/msword'
-        });
-        
+        const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
         const url = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(html);
         const downloadLink = document.createElement("a");
         document.body.appendChild(downloadLink);
         downloadLink.href = url;
-        downloadLink.download = 'resultados_cortocircuito.doc';
+        downloadLink.download = 'resultados_cortocircuito_v18.doc';
         downloadLink.click();
         document.body.removeChild(downloadLink);
     }
 
     function toggleFullscreen() {
         const elem = document.documentElement;
-        const enterIcon = getById('fs-enter-icon');
-        const exitIcon = getById('fs-exit-icon');
-
         if (!document.fullscreenElement) {
-            elem.requestFullscreen().catch(err => {
-                alert(`Error al intentar activar pantalla completa: ${err.message} (${err.name})`);
-            });
-            enterIcon.classList.add('hidden');
-            exitIcon.classList.remove('hidden');
+            elem.requestFullscreen().catch(err => { alert(`Error: ${err.message}`); });
         } else {
             document.exitFullscreen();
-            enterIcon.classList.remove('hidden');
-            exitIcon.classList.add('hidden');
         }
     }
+    
+    // --- INICIALIZACIÓN Y MANEJO DE EVENTOS ---
     
     function init() {
         populateAnnexTables();
@@ -451,8 +659,22 @@ document.addEventListener('DOMContentLoaded', function() {
         getById('exportWordBtn').addEventListener('click', handleExportWord);
         getById('fullscreen-btn').addEventListener('click', toggleFullscreen);
         
+        document.addEventListener('fullscreenchange', () => {
+            const enterIcon = getById('fs-enter-icon');
+            const exitIcon = getById('fs-exit-icon');
+            const isFullscreen = !!document.fullscreenElement;
+            enterIcon.classList.toggle('hidden', isFullscreen);
+            exitIcon.classList.toggle('hidden', !isFullscreen);
+        });
+
         getById('shortCircuitForm').addEventListener('input', e => {
-            if (e.target.classList.contains('data-input')) calculateAndDisplaySC();
+            if (e.target.classList.contains('data-input')) {
+                 if (e.target.type === 'checkbox' && e.target.classList.contains('motor-contribution-cb')) {
+                    const container = e.target.closest('.node-content').querySelector('.motor-input-container');
+                    container.classList.toggle('hidden', !e.target.checked);
+                }
+                calculateAndDisplaySC();
+            }
         });
         
         getById('shortCircuitForm').addEventListener('click', e => {
@@ -467,6 +689,21 @@ document.addEventListener('DOMContentLoaded', function() {
                  const feederNode = e.target.closest('.feeder-node');
                  const container = feederNode.querySelector('.circuitTreeContainer');
                  addCableNode(container);
+            }
+        });
+
+        // Eventos para el modal del diagrama
+        const diagramModal = getById('diagramModal');
+        getById('fullscreenDiagramBtn').addEventListener('click', () => {
+            getById('diagramModalContent').innerHTML = getById('diagramContainer').outerHTML;
+            diagramModal.style.display = 'flex';
+        });
+        getById('closeDiagramModal').addEventListener('click', () => {
+            diagramModal.style.display = 'none';
+        });
+        diagramModal.addEventListener('click', (e) => {
+            if (e.target === diagramModal) {
+                diagramModal.style.display = 'none';
             }
         });
 
