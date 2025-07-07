@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora de Cortocircuito Profesional v18 (UI Mejorada y Anexo Ampliado)</title>
+    <title>Calculadora de Cortocircuito Profesional v23 (Versión Final)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root { --brand-color: #4f46e5; --brand-color-light: #eef2ff; }
+        :root { --brand-color: #4f46e5; --brand-color-light: #eef2ff; --line-color: #374151; }
         body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; }
         .input-group { margin-bottom: 1rem; }
         .input-group label { display: block; margin-bottom: 0.5rem; color: #4a5568; font-weight: 500; font-size: 0.875rem; }
@@ -40,18 +40,19 @@
         .node-name-input:focus { outline: none; box-shadow: 0 0 0 2px var(--brand-color); }
         .input-error { border-color: #ef4444 !important; box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.4) !important; }
 
-        /* Estilos para el Diagrama Unifilar */
-        .diagram-container { display: flex; flex-direction: column; align-items: center; font-family: 'Courier New', monospace; font-size: 13px; padding: 1rem; }
-        .diagram-element { text-align: center; margin: 4px 0; }
-        .diagram-line { width: 2px; background-color: #374151; flex-shrink: 0; }
-        .diagram-bus { width: 90%; height: 5px; background-color: #1f2937; margin: 4px 0; border-radius: 2px; }
-        .diagram-children-wrapper { display: flex; flex-direction: row; justify-content: center; align-items: flex-start; width: 100%; }
-        .diagram-branch { display: flex; flex-direction: column; align-items: center; padding: 0 15px; flex-grow: 1; }
-        .diagram-label { background-color: #e0e7ff; padding: 3px 6px; border-radius: 4px; border: 1px solid #a5b4fc; white-space: nowrap; font-weight: 500; }
-        .diagram-point { color: #ef4444; font-weight: bold; font-size: 24px; margin: -10px 0; cursor: default; }
-        .diagram-icon { width: 40px; height: 40px; margin: 8px 0; }
-        #diagramModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); z-index: 1000; display: none; justify-content: center; align-items: center; }
-        #diagramModalContent { background-color: #f3f4f6; padding: 20px; border-radius: 10px; max-width: 95vw; max-height: 95vh; overflow: auto; }
+        /* Estilos Diagrama Unifilar Profesional */
+        .diagram-container { display: flex; flex-direction: column; align-items: center; font-family: 'Courier New', monospace; font-size: 13px; padding: 1rem; background-color: #fff; }
+        .diagram-line { width: 2px; background-color: var(--line-color); flex-shrink: 0; }
+        .diagram-bus { width: 100%; height: 5px; background-color: var(--line-color); margin: 0; position: relative; }
+        .diagram-children-wrapper { display: flex; flex-direction: row; justify-content: space-around; align-items: flex-start; width: 100%; gap: 24px; }
+        .diagram-branch { display: flex; flex-direction: column; align-items: center; flex-grow: 1; min-width: 140px; position: relative; }
+        .diagram-label { color: #555; font-size: 11px; white-space: nowrap; }
+        .diagram-icon-wrapper { position: relative; display: flex; justify-content: center; align-items: center; width: 100%; height: 40px; }
+        .diagram-icon { height: 32px; width: auto; background-color: #fff; padding: 0 2px; z-index: 1; }
+        .diagram-fault-icon { height: 20px; width: auto; flex-shrink: 0; margin-left: 8px; z-index: 2; }
+        .diagram-line-through { position: absolute; width: 2px; height: 100%; background-color: var(--line-color); z-index: 0; }
+        #diagramModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); z-index: 1000; display: none; justify-content: center; align-items: center; }
+        #diagramModalContent { background-color: #fff; padding: 20px; border-radius: 10px; max-width: 95vw; max-height: 95vh; overflow: auto; }
         #closeDiagramModal { position: absolute; top: 15px; right: 25px; font-size: 35px; color: white; cursor: pointer; }
     </style>
 </head>
@@ -62,21 +63,17 @@
         <div id="diagramModalContent"></div>
     </div>
 
-    <div class="container mx-auto p-4 md:p-8 max-w-7xl">
+    <div class="container mx-auto p-4 md:p-8 max-w-screen-2xl">
         <header class="text-center mb-8 relative">
             <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Calculadora de Cortocircuito Profesional</h1>
             <p class="text-md text-gray-600 mt-2">Análisis con Diagrama Unifilar Dinámico</p>
-            <button id="fullscreen-btn" class="absolute top-0 right-0 p-2 text-gray-500 hover:text-gray-800" title="Pantalla Completa">
-                <svg id="fs-enter-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 1v4m0 0h-4m4 0l-5-5" /></svg>
-                <svg id="fs-exit-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 4H4v6m0 0l6 6m-6-6h6m4 10h6v-6m0 0l-6-6m6 6v-6" /></svg>
-            </button>
         </header>
 
         <div class="mb-12">
             <h2 class="text-2xl font-bold text-center mb-6 text-gray-800 border-b pb-3">Análisis de Impedancia de Falla</h2>
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
                 
-                <div class="bg-white p-6 rounded-xl shadow-md">
+                <div class="bg-white p-6 rounded-xl shadow-md lg:col-span-2">
                     <form id="shortCircuitForm">
                         <div class="section-divider">
                             <h3 class="text-xl font-semibold mb-4 text-gray-800">1. Red de Distribución (MT)</h3>
@@ -99,17 +96,7 @@
                     </form>
                 </div>
 
-                <div class="space-y-8">
-                    <div id="resultsContainerSC" class="bg-white p-6 rounded-xl shadow-md">
-                        <div class="flex justify-between items-center"><h3 class="text-xl font-semibold mb-4 text-gray-800">Resultados</h3>
-                            <div class="flex gap-2">
-                                 <button id="exportWordBtn" class="btn bg-blue-600 hover:bg-blue-700 text-white text-sm py-2 px-3">Word</button>
-                                 <button id="exportSCBtn" class="btn bg-green-600 hover:bg-green-700 text-white text-sm py-2 px-3">CSV</button>
-                            </div>
-                        </div>
-                        <div id="resultsPlaceholderSC" class="text-center text-gray-500 py-10"><svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V7a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg><p class="mt-4">Agregue un alimentador para comenzar.</p></div>
-                        <div id="resultsContentSC"></div>
-                    </div>
+                <div class="space-y-8 lg:col-span-3">
                     <div id="diagramCard" class="bg-white p-6 rounded-xl shadow-md">
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="text-xl font-semibold text-gray-800">Diagrama Unifilar</h3>
@@ -120,6 +107,16 @@
                         <div id="diagramContainerWrapper" class="p-4 border rounded-lg bg-gray-50 min-h-[400px] overflow-x-auto">
                             <div id="diagramContainer"></div>
                         </div>
+                    </div>
+                    <div id="resultsContainerSC" class="bg-white p-6 rounded-xl shadow-md">
+                        <div class="flex justify-between items-center"><h3 class="text-xl font-semibold mb-4 text-gray-800">Resultados</h3>
+                            <div class="flex gap-2">
+                                 <button id="exportWordBtn" class="btn bg-blue-600 hover:bg-blue-700 text-white text-sm py-2 px-3">Word</button>
+                                 <button id="exportSCBtn" class="btn bg-green-600 hover:bg-green-700 text-white text-sm py-2 px-3">CSV</button>
+                            </div>
+                        </div>
+                        <div id="resultsPlaceholderSC" class="text-center text-gray-500 py-10"><svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V7a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg><p class="mt-4">Agregue un alimentador para comenzar.</p></div>
+                        <div id="resultsContentSC"></div>
                     </div>
                 </div>
             </div>
@@ -172,8 +169,10 @@ document.addEventListener('DOMContentLoaded', function() {
         KAPPA_TABLE: [{r:0,k:2},{r:0.1,k:1.86},{r:0.2,k:1.71},{r:0.3,k:1.57},{r:0.4,k:1.45},{r:0.5,k:1.35},{r:0.6,k:1.26},{r:0.7,k:1.19},{r:0.8,k:1.13},{r:0.9,k:1.08},{r:1,k:1.04},{r:1.1,k:1.02},{r:1.2,k:1.01}],
         TRAFO_VALUES: [{ s: "25-160", ucc: 4, ur: "2.8-1.47" },{ s: "200-315", ucc: 4, ur: "1.4-1.23" },{ s: "400-630", ucc: 4, ur: "1.15-1.03" },{ s: "800-1250", ucc: 5, ur: "1.1-1.05" },{ s: "1600-2500", ucc: 6, ur: "1.0-1.05" }],
         ICONS: {
-            TRANSFORMER: `<svg class="diagram-icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" stroke-width="3" stroke="#000000" fill="none"><circle cx="26" cy="32" r="14"/><circle cx="38" cy="32" r="14"/></svg>`,
-            MOTOR: `<svg class="diagram-icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" stroke-width="3" stroke="#000000" fill="none"><circle cx="32" cy="32" r="18"/><text x="25" y="42" font-family="Arial" font-size="24" font-weight="bold" fill="#000000">M</text></svg>`
+            TRANSFORMER: `<svg class="diagram-icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" stroke-width="3" stroke="var(--line-color)" fill="none"><circle cx="32" cy="22" r="12"/><circle cx="32" cy="42" r="12"/></svg>`,
+            MOTOR: `<svg class="diagram-icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><g stroke-width="3" stroke="var(--line-color)" fill="none"><circle cx="32" cy="32" r="18"/><text x="25" y="42" font-family="Arial" font-size="24" font-weight="bold" fill="var(--line-color)">M</text></g></svg>`,
+            SWITCH: `<svg class="diagram-icon" style="height:28px" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><g stroke="var(--line-color)" stroke-width="2.5"><line x1="32" y1="0" x2="32" y2="26"/><line x1="32" y1="38" x2="32" y2="64"/><line x1="22" y1="38" x2="42" y2="26"/></g></svg>`,
+            FAULT: `<svg class="diagram-fault-icon" viewBox="0 0 50 40"><path d="M5 20 L15 20 L20 10 L30 30 L35 20 L45 20" stroke="#ef4444" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M45 20 L40 15 M45 20 L40 25" stroke="#ef4444" stroke-width="3" fill="none" stroke-linecap="round"/></svg>`
         }
     };
 
@@ -246,6 +245,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="input-group"><label>Aislación</label><select class="cable-insulation-sc data-input"><option value="xlpe" selected>XLPE</option><option value="pvc">PVC</option></select></div>
                     <div class="input-group"><label>Tipo</label><select class="cable-type-sc data-input"><option value="tripolar" selected>Tripolar</option><option value="unipolar">3 Unipolares</option></select></div>
                     <div class="input-group"><label>Tiempo Despeje [s]</label><input type="number" value="0.1" min="0.01" step="0.01" class="protection-time-sc data-input"></div>
+                    <div class="input-group"><label>Norma Cable</label><select class="cable-standard-sc data-input"><option value="2178" selected>IRAM 2178</option><option value="247">IRAM 247-3</option></select></div>
+                    <div class="input-group"><label>Tipo de Tendido</label><select class="cable-install-sc data-input"><option value="B1">B1</option><option value="B2" selected>B2</option><option value="C">C</option><option value="E">E</option><option value="F">F</option><option value="G">G</option></select></div>
                 </div>
                 <div class="mt-2 p-3 bg-indigo-50 rounded-lg">
                      <label class="flex items-center space-x-2 cursor-pointer">
@@ -458,10 +459,9 @@ document.addEventListener('DOMContentLoaded', function() {
         diagramContainer.innerHTML = ''; 
         diagramContainer.className = 'diagram-container';
 
-        const networkEl = document.createElement('div');
-        networkEl.className = 'diagram-element diagram-label';
-        networkEl.innerHTML = `Red MT (${getById('sccRed').value} MVA / ${getById('tensionRed').value} kV)`;
-        diagramContainer.appendChild(networkEl);
+        const busbarMT = document.createElement('div');
+        busbarMT.className = 'diagram-bus';
+        diagramContainer.appendChild(busbarMT);
         
         const feedersContainer = document.createElement('div');
         feedersContainer.className = 'diagram-children-wrapper';
@@ -472,50 +472,33 @@ document.addEventListener('DOMContentLoaded', function() {
             feederBranch.className = 'diagram-branch';
             feedersContainer.appendChild(feederBranch);
 
-            let line = document.createElement('div');
-            line.className = 'diagram-line';
-            line.style.height = '20px';
-            feederBranch.appendChild(line);
+            const switchWrapper = document.createElement('div');
+            switchWrapper.className = 'diagram-icon-wrapper';
+            switchWrapper.innerHTML = `<div class="diagram-line-through"></div><div class="diagram-icon">${CONSTS.ICONS.SWITCH}</div>`;
+            feederBranch.appendChild(switchWrapper);
             
-            let point = document.createElement('div');
-            point.className = 'diagram-point';
-            point.innerHTML = '→';
-            point.title = 'Punto de Falla: Acometida MT';
-            feederBranch.appendChild(point);
-
             const length_mt_m = feederNode.querySelector('.cable-length-mt').value;
             if (length_mt_m > 0) {
-                line = document.createElement('div');
-                line.className = 'diagram-line';
-                line.style.height = '30px';
-                feederBranch.appendChild(line);
-                const label = document.createElement('div');
-                label.className = 'diagram-element diagram-label';
-                label.innerText = `Cable MT: ${length_mt_m}m`;
-                feederBranch.appendChild(label);
+                const cableSegment = document.createElement('div');
+                cableSegment.className = 'diagram-icon-wrapper';
+                cableSegment.innerHTML = `<div class="diagram-line-through"></div><span class="diagram-label">Cable MT</span>`;
+                feederBranch.appendChild(cableSegment);
             }
 
-            point = document.createElement('div');
-            point.className = 'diagram-point';
-            point.innerHTML = '→';
-            point.title = 'Punto de Falla: Bornes MT Trafo';
-            feederBranch.appendChild(point);
-
-            const trafoEl = document.createElement('div');
-            trafoEl.className = 'diagram-element';
             const trafoPower = feederNode.querySelector('.power').value;
-            trafoEl.innerHTML = CONSTS.ICONS.TRANSFORMER + `<div class="diagram-label">${trafoPower} kVA</div>`;
-            feederBranch.appendChild(trafoEl);
+            const trafoWrapper = document.createElement('div');
+            trafoWrapper.className = 'diagram-icon-wrapper';
+            trafoWrapper.innerHTML = `<div class="diagram-line-through"></div>
+                                      <div class="diagram-icon">${CONSTS.ICONS.TRANSFORMER}</div>
+                                      ${CONSTS.ICONS.FAULT}`;
+            feederBranch.appendChild(trafoWrapper);
+            feederBranch.innerHTML += `<span class="diagram-label">${trafoPower} kVA</span>`;
+            
+            feederBranch.innerHTML += `<div class="diagram-line" style="height: 20px;"></div>`;
 
-            point = document.createElement('div');
-            point.className = 'diagram-point';
-            point.innerHTML = '→';
-            point.title = 'Punto de Falla: Bornes BT Trafo';
-            feederBranch.appendChild(point);
-
-            const busbar = document.createElement('div');
-            busbar.className = 'diagram-bus';
-            feederBranch.appendChild(busbar);
+            const busbarBT = document.createElement('div');
+            busbarBT.className = 'diagram-bus';
+            feederBranch.appendChild(busbarBT);
 
             const btTrunksContainer = document.createElement('div');
             btTrunksContainer.className = 'diagram-children-wrapper';
@@ -533,34 +516,32 @@ document.addEventListener('DOMContentLoaded', function() {
         branchContainer.className = 'diagram-branch';
         parentDiagramContainer.appendChild(branchContainer);
 
-        let line = document.createElement('div');
-        line.className = 'diagram-line';
-        line.style.height = '20px';
-        branchContainer.appendChild(line);
-
+        branchContainer.innerHTML += `<div class="diagram-line" style="height: 20px;"></div>`;
+        
+        const switchWrapper = document.createElement('div');
+        switchWrapper.className = 'diagram-icon-wrapper';
+        switchWrapper.innerHTML = `<div class="diagram-line-through"></div><div class="diagram-icon">${CONSTS.ICONS.SWITCH}</div>`;
+        branchContainer.appendChild(switchWrapper);
+        
         const cableName = nodeElement.querySelector('.node-name-input').value;
-        const cableLength = nodeElement.querySelector('.cable-length-sc').value;
-        const cableSection = nodeElement.querySelector('.cable-section-area-sc').value;
-        const label = document.createElement('div');
-        label.className = 'diagram-element diagram-label';
-        label.innerText = `${cableName} (${cableLength}m, ${cableSection}mm²)`;
-        branchContainer.appendChild(label);
-
-        line = document.createElement('div');
-        line.className = 'diagram-line';
-        line.style.height = '20px';
-        branchContainer.appendChild(line);
-
-        const point = document.createElement('div');
-        point.className = 'diagram-point';
-        point.innerHTML = '→';
-        point.title = `Punto de Falla: ${cableName}`;
-        branchContainer.appendChild(point);
+        
+        const cableSegment = document.createElement('div');
+        cableSegment.className = 'diagram-icon-wrapper';
+        cableSegment.innerHTML = `
+            <div class="diagram-line-through"></div>
+            <div class="flex items-center">
+                <span class="diagram-label">${cableName}</span>
+                ${CONSTS.ICONS.FAULT}
+            </div>
+        `;
+        branchContainer.appendChild(cableSegment);
 
         const childrenContainer = nodeElement.querySelector('.children-container');
         const childrenNodes = childrenContainer.querySelectorAll(':scope > .cable-node');
+        const isMotorLoad = nodeElement.querySelector('.motor-contribution-cb').checked;
 
         if (childrenNodes.length > 0) {
+            branchContainer.innerHTML += `<div class="diagram-line" style="height: 20px;"></div>`;
             const busbar = document.createElement('div');
             busbar.className = 'diagram-bus';
             branchContainer.appendChild(busbar);
@@ -572,17 +553,15 @@ document.addEventListener('DOMContentLoaded', function() {
             childrenNodes.forEach(childNode => {
                 recursiveDrawNode(childNode, newParentContainer);
             });
-        }
-
-        const motorCb = nodeElement.querySelector('.motor-contribution-cb');
-        if (motorCb && motorCb.checked) {
-            const motorEl = document.createElement('div');
-            motorEl.className = 'diagram-element';
-            const motorIn = nodeElement.querySelector('.motor-in-sc').value;
-            motorEl.innerHTML = CONSTS.ICONS.MOTOR + `<div class="diagram-label">Motor (${motorIn}A)</div>`;
-            branchContainer.appendChild(motorEl);
+        } else if (isMotorLoad) {
+            branchContainer.innerHTML += `<div class="diagram-line" style="height: 20px;"></div>`;
+            const motorWrapper = document.createElement('div');
+            motorWrapper.className = 'diagram-icon-wrapper';
+            motorWrapper.innerHTML = `<div class="diagram-line-through"></div><div class="diagram-icon">${CONSTS.ICONS.MOTOR}</div>`;
+            branchContainer.appendChild(motorWrapper);
         }
     }
+
 
     // --- EXPORTACIÓN Y OTROS ---
 
@@ -594,7 +573,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const csvContent = "data:text/csv;charset=utf-8," + rows.map(processRow).join('\n');
         const link = document.createElement("a");
         link.setAttribute("href", encodeURI(csvContent));
-        link.setAttribute("download", 'resultados_cortocircuito_v18.csv');
+        link.setAttribute("download", 'resultados_cortocircuito_v22.csv');
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -632,7 +611,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const downloadLink = document.createElement("a");
         document.body.appendChild(downloadLink);
         downloadLink.href = url;
-        downloadLink.download = 'resultados_cortocircuito_v18.doc';
+        downloadLink.download = 'resultados_cortocircuito_v22.doc';
         downloadLink.click();
         document.body.removeChild(downloadLink);
     }
@@ -657,14 +636,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         getById('exportSCBtn').addEventListener('click', handleExportSC);
         getById('exportWordBtn').addEventListener('click', handleExportWord);
-        getById('fullscreen-btn').addEventListener('click', toggleFullscreen);
         
         document.addEventListener('fullscreenchange', () => {
-            const enterIcon = getById('fs-enter-icon');
-            const exitIcon = getById('fs-exit-icon');
             const isFullscreen = !!document.fullscreenElement;
-            enterIcon.classList.toggle('hidden', isFullscreen);
-            exitIcon.classList.toggle('hidden', !isFullscreen);
         });
 
         getById('shortCircuitForm').addEventListener('input', e => {
